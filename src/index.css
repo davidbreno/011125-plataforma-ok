@@ -1,0 +1,141 @@
+@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom animations and utilities */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+.animation-delay-1000 {
+  animation-delay: 1s;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.bg-radial-gradient {
+  background: radial-gradient(ellipse at center, var(--tw-gradient-stops));
+}
+
+/* Theme variables (centralized palette) ----------------------------------
+   Update these variables with the palette you will send. They affect base
+   colors used by custom utilities below. Note: existing Tailwind utility
+   classes (e.g., bg-blue-500) will not automatically change; to fully
+   migrate the site to the new palette we can replace color classes to use
+   these utilities or extend Tailwind config later.
+*/
+:root {
+  /* Palette from Figma - tons bege/creme/marrom suaves */
+  --color-bg: #f5f2ef; /* fundo geral - bege clarinho */
+  --color-sidebar: #faf8f6; /* sidebar - quase branco cremoso */
+  --color-card: #ffffff; /* cards brancos */
+  --color-primary: #c88654; /* laranja/marrom - botões primários */
+  --color-primary-hover: #b57648;
+  --color-secondary: #e8d5c4; /* bege rosado - cards secundários */
+  --color-text: #4a4a4a; /* texto principal - cinza escuro */
+  --color-text-light: #8b8b8b; /* texto secundário */
+  --color-border: #e8e3df; /* bordas suaves */
+  --color-accent: #d4a574; /* destaque dourado */
+  
+  /* Semantic color aliases for status and accents */
+  --accent-blue: #2563eb;
+  --accent-blue-600: #1d4ed8;
+  --surface-light: #fdfcfb;
+  --status-success: #059669;
+  --status-success-bg: #dcfce7;
+  --status-warning: #d97706;
+  --status-warning-bg: #fef3c7;
+  --status-danger: #dc2626;
+  --status-danger-bg: #fee2e2;
+  
+  /* Toast colors */
+  --toast-bg: #d86161ff;
+  --toast-success: #10b981;
+  --toast-error: #ef4444;
+}
+
+/* Helper classes using theme variables */
+.bg-primary { background-color: var(--color-primary) !important; }
+.text-primary { color: var(--color-primary) !important; }
+.text-muted { color: var(--color-text-light) !important; }
+.bg-secondary { background-color: var(--color-secondary) !important; }
+.border-default { border-color: var(--color-border) !important; }
+
+/* Button utilities */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+}
+
+/* Theme helpers */
+.bg-hero-palette {
+  background-color: var(--color-bg);
+}
+
+.card-surface {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* Use .app-bg on the root container to apply palette background */
+.app-bg { 
+  background-color: var(--color-bg); 
+  color: var(--color-text); 
+}
+
+/* Marble texture for marketing/login panels */
+.bg-marble {
+  background-color: var(--color-primary);
+  background-image: linear-gradient(rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+}
+
+/* Hero background - limpo e minimalista */
+.bg-hero-dark {
+  background-color: var(--color-bg);
+}
+
+/* Marble texture overlay - subtle pattern for page backgrounds */
+body {
+  background: 
+    linear-gradient(135deg, 
+      rgba(255,255,255,0.4) 0%, 
+      rgba(245,242,239,0.6) 25%, 
+      rgba(255,255,255,0.3) 50%, 
+      rgba(250,248,246,0.5) 75%, 
+      rgba(255,255,255,0.4) 100%
+    ),
+    radial-gradient(ellipse at 20% 30%, rgba(232,213,196,0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(200,134,84,0.08) 0%, transparent 50%),
+    var(--color-bg);
+  background-attachment: fixed;
+  min-height: 100vh;
+  font-family: var(--font-family);
+}
+
+.marble-bg {
+  background: 
+    linear-gradient(135deg, 
+      rgba(255,255,255,0.5) 0%, 
+      transparent 25%, 
+      rgba(255,255,255,0.3) 50%, 
+      transparent 75%, 
+      rgba(255,255,255,0.5) 100%
+    ),
+    radial-gradient(ellipse at 30% 40%, rgba(232,213,196,0.15) 0%, transparent 60%),
+    var(--color-card);
+}
