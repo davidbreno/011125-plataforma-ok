@@ -67,6 +67,11 @@ export default function Patients() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
+      // Ensure session is loaded to safely tag createdBy/updatedBy
+      if (!currentUser || !currentUser.uid) {
+        toast.error('Sessão do usuário ainda não carregou. Tente novamente em alguns segundos.')
+        return
+      }
       // Remove empty/undefined fields
       const cleanData = Object.entries(formData).reduce((acc, [key, value]) => {
         if (value !== '' && value !== undefined && value !== null) {

@@ -62,6 +62,10 @@ export default function Stock() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
+      if (!currentUser || !currentUser.uid) {
+        toast.error('Sessão do usuário ainda não carregou. Tente novamente em alguns segundos.')
+        return
+      }
       if (editingItem) {
         const updatePayload = {
           ...formData,
