@@ -82,17 +82,17 @@ export default function DoctorHome() {
               <p className="text-xs" style={{ color: 'var(--color-text-light)' }}>+12% vs mês anterior</p>
             </div>
             <svg viewBox="0 0 60 40" className="w-24 h-16 ml-4">
-              <rect x="2" y="25" width="3" height="15" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="7" y="20" width="3" height="20" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="12" y="18" width="3" height="22" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="17" y="15" width="3" height="25" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="22" y="22" width="3" height="18" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="27" y="10" width="3" height="30" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="32" y="12" width="3" height="28" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="37" y="8" width="3" height="32" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="42" y="16" width="3" height="24" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="47" y="5" width="3" height="35" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="52" y="14" width="3" height="26" fill="#4fd8d5" opacity="0.8"/>
+              <rect x="2" y="25" width="3" height="15" fill="#3b82f6" opacity="0.9"/>
+              <rect x="7" y="20" width="3" height="20" fill="#3b82f6" opacity="0.9"/>
+              <rect x="12" y="18" width="3" height="22" fill="#8b5cf6" opacity="0.9"/>
+              <rect x="17" y="15" width="3" height="25" fill="#8b5cf6" opacity="0.9"/>
+              <rect x="22" y="22" width="3" height="18" fill="#a855f7" opacity="0.9"/>
+              <rect x="27" y="10" width="3" height="30" fill="#a855f7" opacity="0.9"/>
+              <rect x="32" y="12" width="3" height="28" fill="#a855f7" opacity="0.9"/>
+              <rect x="37" y="8" width="3" height="32" fill="#ec4899" opacity="0.9"/>
+              <rect x="42" y="16" width="3" height="24" fill="#ec4899" opacity="0.9"/>
+              <rect x="47" y="5" width="3" height="35" fill="#ec4899" opacity="0.9"/>
+              <rect x="52" y="14" width="3" height="26" fill="#ec4899" opacity="0.9"/>
             </svg>
           </div>
         </div>
@@ -105,17 +105,17 @@ export default function DoctorHome() {
               <p className="text-xs" style={{ color: 'var(--color-text-light)' }}>-4% vs mês anterior</p>
             </div>
             <svg viewBox="0 0 60 40" className="w-24 h-16 ml-4">
-              <rect x="2" y="15" width="3" height="25" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="7" y="12" width="3" height="28" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="12" y="18" width="3" height="22" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="17" y="20" width="3" height="20" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="22" y="10" width="3" height="30" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="27" y="22" width="3" height="18" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="32" y="16" width="3" height="24" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="37" y="8" width="3" height="32" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="42" y="14" width="3" height="26" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="47" y="6" width="3" height="34" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="52" y="18" width="3" height="22" fill="#4fd8d5" opacity="0.8"/>
+              <rect x="2" y="15" width="3" height="25" fill="#ec4899" opacity="0.9"/>
+              <rect x="7" y="12" width="3" height="28" fill="#ec4899" opacity="0.9"/>
+              <rect x="12" y="18" width="3" height="22" fill="#a855f7" opacity="0.9"/>
+              <rect x="17" y="20" width="3" height="20" fill="#a855f7" opacity="0.9"/>
+              <rect x="22" y="10" width="3" height="30" fill="#8b5cf6" opacity="0.9"/>
+              <rect x="27" y="22" width="3" height="18" fill="#8b5cf6" opacity="0.9"/>
+              <rect x="32" y="16" width="3" height="24" fill="#8b5cf6" opacity="0.9"/>
+              <rect x="37" y="8" width="3" height="32" fill="#3b82f6" opacity="0.9"/>
+              <rect x="42" y="14" width="3" height="26" fill="#3b82f6" opacity="0.9"/>
+              <rect x="47" y="6" width="3" height="34" fill="#3b82f6" opacity="0.9"/>
+              <rect x="52" y="18" width="3" height="22" fill="#3b82f6" opacity="0.9"/>
             </svg>
           </div>
         </div>
@@ -128,17 +128,17 @@ export default function DoctorHome() {
               <p className="text-xs" style={{ color: 'var(--color-text-light)' }}>Última atualização 01/11 21:41</p>
             </div>
             <svg viewBox="0 0 60 40" className="w-24 h-16 ml-4">
-              <rect x="2" y="20" width="3" height="20" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="7" y="18" width="3" height="22" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="12" y="12" width="3" height="28" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="17" y="24" width="3" height="16" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="22" y="16" width="3" height="24" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="27" y="10" width="3" height="30" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="32" y="14" width="3" height="26" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="37" y="22" width="3" height="18" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="42" y="8" width="3" height="32" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="47" y="12" width="3" height="28" fill="#4fd8d5" opacity="0.8"/>
-              <rect x="52" y="6" width="3" height="34" fill="#4fd8d5" opacity="0.8"/>
+              <rect x="2" y="20" width="3" height="20" fill="#a855f7" opacity="0.9"/>
+              <rect x="7" y="18" width="3" height="22" fill="#a855f7" opacity="0.9"/>
+              <rect x="12" y="12" width="3" height="28" fill="#8b5cf6" opacity="0.9"/>
+              <rect x="17" y="24" width="3" height="16" fill="#8b5cf6" opacity="0.9"/>
+              <rect x="22" y="16" width="3" height="24" fill="#3b82f6" opacity="0.9"/>
+              <rect x="27" y="10" width="3" height="30" fill="#3b82f6" opacity="0.9"/>
+              <rect x="32" y="14" width="3" height="26" fill="#3b82f6" opacity="0.9"/>
+              <rect x="37" y="22" width="3" height="18" fill="#ec4899" opacity="0.9"/>
+              <rect x="42" y="8" width="3" height="32" fill="#ec4899" opacity="0.9"/>
+              <rect x="47" y="12" width="3" height="28" fill="#ec4899" opacity="0.9"/>
+              <rect x="52" y="6" width="3" height="34" fill="#ec4899" opacity="0.9"/>
             </svg>
           </div>
         </div>
@@ -271,18 +271,24 @@ export default function DoctorHome() {
             </div>
             <p className="text-sm mb-4" style={{ color: 'var(--color-text-light)' }}>Acelere suas rotinas diárias</p>
             <div className="space-y-2">
-              <button className="btn-primary w-full flex items-center gap-2 justify-start">
-                <FaUserPlus />
-                Cadastrar novo paciente
-              </button>
-              <button className="btn-primary w-full flex items-center gap-2 justify-start">
-                <FaMoneyBillWave />
-                Registrar pagamento
-              </button>
-              <button className="btn-primary w-full flex items-center gap-2 justify-start">
-                <FaFileAlt />
-                Criar modelo de anamnese
-              </button>
+              <Link to="/doctor/patients">
+                <button className="btn-primary w-full flex items-center gap-2 justify-start">
+                  <FaUserPlus />
+                  Cadastrar novo paciente
+                </button>
+              </Link>
+              <Link to="/doctor/billing">
+                <button className="btn-primary w-full flex items-center gap-2 justify-start">
+                  <FaMoneyBillWave />
+                  Registrar pagamento
+                </button>
+              </Link>
+              <Link to="/doctor/documents">
+                <button className="btn-primary w-full flex items-center gap-2 justify-start">
+                  <FaFileAlt />
+                  Criar modelo de anamnese
+                </button>
+              </Link>
             </div>
           </div>
         </div>

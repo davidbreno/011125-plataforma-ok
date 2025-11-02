@@ -257,9 +257,9 @@ export default function Medicines() {
   ]
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <div className="min-h-screen p-8 bg-hero-dark">
       {/* Header */}
-      <header className="card-surface border-b p-4" style={{ borderColor: 'var(--color-border)' }}>
+      <header className="card-surface border-b p-4 mb-6" style={{ borderColor: 'var(--color-border)', borderRadius: '1.5rem' }}>
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <Link 
@@ -295,7 +295,7 @@ export default function Medicines() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto p-6">
+      <main className="max-w-7xl mx-auto">
         {/* Controls */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4 w-full lg:w-auto">

@@ -175,9 +175,9 @@ export default function Prescriptions() {
   const todayPrescriptions = filteredPrescriptions.filter(prescription => prescription.prescriptionDate === selectedDate)
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <div className="min-h-screen p-8 bg-hero-dark">
       {/* Header */}
-      <header className="mb-6 p-6 rounded-xl card-surface">
+      <header className="p-6 card-surface mb-6" style={{ borderRadius: '1.5rem' }}>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-3">
             <Link 

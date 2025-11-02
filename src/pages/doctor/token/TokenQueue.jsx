@@ -222,9 +222,9 @@ export default function TokenQueue() {
 
 
   return (
-    <div className="min-h-screen space-y-6" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <div className="min-h-screen p-8 bg-hero-dark">
       {/* Header */}
-      <header className="card-surface p-6">
+      <header className="card-surface p-6 mb-6" style={{ borderRadius: '1.5rem' }}>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-3">
             <Link 

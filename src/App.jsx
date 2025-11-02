@@ -48,6 +48,7 @@ import DoctorDocuments from './pages/doctor/documents/Documents'
 import DoctorReports from './pages/doctor/reports/Reports'
 import DoctorStock from './pages/doctor/stock/Stock'
 import DoctorAttendance from './pages/doctor/attendance/Attendance'
+import DoctorBilling from './pages/doctor/billing/Billing'
 
 function App() {
   return (
@@ -73,6 +74,7 @@ function App() {
         <Route path="stock" element={<DoctorStock />} />
         <Route path="attendance" element={<DoctorAttendance />} />
         <Route path="token" element={<TokenQueue />} />
+        <Route path="billing" element={<DoctorBilling />} />
         <Route path="prescriptions" element={<DoctorPrescriptions />} />
         <Route path="prescriptions/create" element={<CreatePrescription />} />
         <Route path="prescriptions/create/:id" element={<CreatePrescription />} />
