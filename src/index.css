@@ -98,7 +98,22 @@
   color: var(--color-text);
   border-radius: 3rem;
   padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  position: relative;
+}
+
+.card-surface::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 3rem;
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px);
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.card-surface > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* Use .app-bg on the root container to apply palette background */

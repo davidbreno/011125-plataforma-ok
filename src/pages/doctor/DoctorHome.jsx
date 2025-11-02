@@ -23,7 +23,7 @@ export default function DoctorHome() {
   }
 
   return (
-    <div>
+    <div className="p-8">
       {/* Header com métricas */}
       <div className="mb-6 flex items-center justify-between">
         <div>

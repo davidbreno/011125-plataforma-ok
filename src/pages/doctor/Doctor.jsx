@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../hooks/useAuth'
-import { Link } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
 import LogoutButton from '../../components/LogoutButton'
 import EmailVerificationStatus from '../../components/EmailVerificationStatus'
+import Sidebar from '../../components/Sidebar'
 import { FaUserDoctor, FaCalendar, FaUserInjured, FaPills, FaCalendarDay, FaFileLines, FaPlus, FaHashtag } from 'react-icons/fa6'
 import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore'
 import { db } from '../../firebase/config'
@@ -104,25 +105,12 @@ export default function Doctor() {
   }, [doctorName, currentUser])
 
   return (
-    <div className="min-h-screen bg-hero-palette" style={{ color: 'var(--color-6)' }}>
-      {/* Header */}
-      <header className="bg-white/5 backdrop-blur-xl border-b border-white/10 p-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary-20 rounded-xl flex items-center justify-center">
-              <FaUserDoctor className="w-6 h-6 text-primary-400" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">Painel do Médico</h1>
-              <p className="text-sm text-muted">Bem-vindo, {currentUser?.displayName || 'David'}</p>
-            </div>
-          </div>
-          <LogoutButton />
-        </div>
-      </header>
+    <div className="flex min-h-screen bg-hero-palette" style={{ color: 'var(--color-6)' }}>
+      {/* Sidebar */}
+      <Sidebar userRole="doctor" />
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto p-6">
+      <main className="flex-1 p-6 overflow-y-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Quick Stats */}
           <Link to="/doctor/appointments" className="card-surface rounded-2xl p-6 transition-colors cursor-pointer">

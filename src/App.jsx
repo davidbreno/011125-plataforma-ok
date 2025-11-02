@@ -42,6 +42,13 @@ import Agenda from './pages/Agenda'
 import Configuracoes from './pages/Configuracoes'
 import Pacientes from './pages/Pacientes'
 
+// New Doctor Pages
+import DoctorPatients from './pages/doctor/patients/Patients'
+import DoctorDocuments from './pages/doctor/documents/Documents'
+import DoctorReports from './pages/doctor/reports/Reports'
+import DoctorStock from './pages/doctor/stock/Stock'
+import DoctorAttendance from './pages/doctor/attendance/Attendance'
+
 function App() {
   return (
     <ThemeProvider>
@@ -60,15 +67,20 @@ function App() {
       }>
         <Route index element={<DoctorHome />} />
         <Route path="appointments" element={<DoctorAppointments />} />
-        <Route path="pacientes" element={<Pacientes />} />
-        <Route path="tokens" element={<TokenQueue />} />
+        <Route path="patients" element={<DoctorPatients />} />
+        <Route path="documents" element={<DoctorDocuments />} />
+        <Route path="reports" element={<DoctorReports />} />
+        <Route path="stock" element={<DoctorStock />} />
+        <Route path="attendance" element={<DoctorAttendance />} />
+        <Route path="token" element={<TokenQueue />} />
         <Route path="prescriptions" element={<DoctorPrescriptions />} />
         <Route path="prescriptions/create" element={<CreatePrescription />} />
         <Route path="prescriptions/create/:id" element={<CreatePrescription />} />
         <Route path="prescriptions/view/:id" element={<ViewPrescription />} />
         <Route path="prescriptions/edit/:id" element={<CreatePrescription />} />
         <Route path="prescriptions/medicines" element={<Medicines />} />
-        {/* Doctor - Generic Pages */}
+        {/* Doctor - Generic Pages (old) */}
+        <Route path="pacientes" element={<Pacientes />} />
         <Route path="relatorios" element={<Reports />} />
         <Route path="agenda" element={<Agenda />} />
         <Route path="estoque" element={<Estoque />} />
