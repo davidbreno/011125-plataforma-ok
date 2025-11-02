@@ -21,6 +21,7 @@ import { db } from '../../../firebase/config'
 
 export default function Attendance() {
   const { currentUser } = useAuth()
+  const isUserReady = !!(currentUser && currentUser.uid)
   const [attendances, setAttendances] = useState([])
   const [filteredAttendances, setFilteredAttendances] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -497,13 +498,20 @@ export default function Attendance() {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-4 items-center">
                 <button
                   type="submit"
                   className="flex-1 btn-primary"
+                  disabled={!isUserReady}
+                  style={!isUserReady ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 >
                   {editingAttendance ? 'Atualizar' : 'Registrar'}
                 </button>
+                {!isUserReady && (
+                  <span className="text-sm" style={{ color: 'var(--color-text-light)' }}>
+                    Carregando sessão...
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={() => {

@@ -20,6 +20,7 @@ import { db } from '../../../firebase/config'
 
 export default function Documents() {
   const { currentUser } = useAuth()
+  const isUserReady = !!(currentUser && currentUser.uid)
   const [documents, setDocuments] = useState([])
   const [filteredDocuments, setFilteredDocuments] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -371,13 +372,20 @@ export default function Documents() {
                 />
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-4 items-center">
                 <button
                   type="submit"
                   className="flex-1 btn-primary"
+                  disabled={!isUserReady}
+                  style={!isUserReady ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 >
                   Cadastrar
                 </button>
+                {!isUserReady && (
+                  <span className="text-sm" style={{ color: 'var(--color-text-light)' }}>
+                    Carregando sessão...
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={() => {

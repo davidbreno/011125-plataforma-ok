@@ -19,6 +19,7 @@ import { db } from '../../../firebase/config'
 
 export default function Patients() {
   const { currentUser } = useAuth()
+  const isUserReady = !!(currentUser && currentUser.uid)
   const [patients, setPatients] = useState([])
   const [filteredPatients, setFilteredPatients] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -378,13 +379,20 @@ export default function Patients() {
                 />
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-4 items-center">
                 <button
                   type="submit"
                   className="flex-1 btn-primary"
+                  disabled={!isUserReady}
+                  style={!isUserReady ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 >
                   {editingPatient ? 'Atualizar' : 'Cadastrar'}
                 </button>
+                {!isUserReady && (
+                  <span className="text-sm" style={{ color: 'var(--color-text-light)' }}>
+                    Carregando sessão...
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={() => {
