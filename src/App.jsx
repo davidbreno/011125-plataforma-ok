@@ -49,6 +49,7 @@ import DoctorReports from './pages/doctor/reports/Reports'
 import DoctorStock from './pages/doctor/stock/Stock'
 import DoctorAttendance from './pages/doctor/attendance/Attendance'
 import DoctorBilling from './pages/doctor/billing/Billing'
+import PatientDetail from './pages/doctor/patients/PatientDetail'
 
 function App() {
   return (
@@ -69,6 +70,7 @@ function App() {
         <Route index element={<DoctorHome />} />
         <Route path="appointments" element={<DoctorAppointments />} />
         <Route path="patients" element={<DoctorPatients />} />
+  <Route path="patients/:id" element={<PatientDetail />} />
         <Route path="documents" element={<DoctorDocuments />} />
         <Route path="reports" element={<DoctorReports />} />
         <Route path="stock" element={<DoctorStock />} />

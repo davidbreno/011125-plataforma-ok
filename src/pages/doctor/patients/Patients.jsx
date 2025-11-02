@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../../hooks/useAuth'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { 
   FaUser, 
@@ -20,6 +20,7 @@ import { db } from '../../../firebase/config'
 export default function Patients() {
   const { currentUser } = useAuth()
   const isUserReady = !!(currentUser && currentUser.uid)
+  const navigate = useNavigate()
   const [patients, setPatients] = useState([])
   const [filteredPatients, setFilteredPatients] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -237,6 +238,14 @@ export default function Patients() {
                 >
                   <FaEdit className="w-4 h-4" />
                   Editar
+                </button>
+                <button
+                  onClick={() => navigate(`/doctor/patients/${patient.id}`)}
+                  className="flex-1 py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  style={{ backgroundColor: 'var(--color-secondary)', color: 'var(--color-text)' }}
+                >
+                  <FaEye className="w-4 h-4" />
+                  Ver
                 </button>
                 <button
                   onClick={() => handleDelete(patient.id)}
