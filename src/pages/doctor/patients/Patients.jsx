@@ -67,19 +67,29 @@ export default function Patients() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
+      // Remove empty/undefined fields
+      const cleanData = Object.entries(formData).reduce((acc, [key, value]) => {
+        if (value !== '' && value !== undefined && value !== null) {
+          acc[key] = value
+        }
+        return acc
+      }, {})
+
       if (editingPatient) {
-        await updateDoc(doc(db, 'patients', editingPatient.id), {
-          ...formData,
+        const updatePayload = {
+          ...cleanData,
           updatedAt: serverTimestamp(),
-          updatedBy: currentUser.uid
-        })
+        }
+        if (currentUser && currentUser.uid) updatePayload.updatedBy = currentUser.uid
+        await updateDoc(doc(db, 'patients', editingPatient.id), updatePayload)
         toast.success('Paciente atualizado com sucesso!')
       } else {
-        await addDoc(collection(db, 'patients'), {
-          ...formData,
+        const createPayload = {
+          ...cleanData,
           createdAt: serverTimestamp(),
-          createdBy: currentUser.uid
-        })
+        }
+        if (currentUser && currentUser.uid) createPayload.createdBy = currentUser.uid
+        await addDoc(collection(db, 'patients'), createPayload)
         toast.success('Paciente cadastrado com sucesso!')
       }
       setShowModal(false)
@@ -172,9 +182,9 @@ export default function Patients() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2.5 rounded-lg w-full outline-none"
               style={{ 
-                backgroundColor: 'var(--color-bg)', 
+                backgroundColor: '#ffffff', 
                 border: '1px solid var(--color-border)',
-                color: 'var(--color-text)'
+                color: '#000000'
               }}
             />
           </div>

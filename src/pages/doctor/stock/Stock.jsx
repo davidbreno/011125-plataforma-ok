@@ -63,21 +63,23 @@ export default function Stock() {
     e.preventDefault()
     try {
       if (editingItem) {
-        await updateDoc(doc(db, 'stock', editingItem.id), {
+        const updatePayload = {
           ...formData,
           quantity: parseInt(formData.quantity),
           minQuantity: parseInt(formData.minQuantity),
           updatedAt: serverTimestamp()
-        })
+        }
+        await updateDoc(doc(db, 'stock', editingItem.id), updatePayload)
         toast.success('Item atualizado com sucesso!')
       } else {
-        await addDoc(collection(db, 'stock'), {
+        const createPayload = {
           ...formData,
           quantity: parseInt(formData.quantity),
           minQuantity: parseInt(formData.minQuantity),
           createdAt: serverTimestamp(),
-          createdBy: currentUser.uid
-        })
+        }
+        if (currentUser?.uid) createPayload.createdBy = currentUser.uid
+        await addDoc(collection(db, 'stock'), createPayload)
         toast.success('Item adicionado com sucesso!')
       }
       setShowModal(false)

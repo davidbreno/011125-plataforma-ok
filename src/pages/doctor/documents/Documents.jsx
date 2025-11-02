@@ -78,12 +78,13 @@ export default function Documents() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await addDoc(collection(db, 'documents'), {
+      const payload = {
         ...formData,
         createdAt: serverTimestamp(),
-        createdBy: currentUser.uid,
-        doctorName: currentUser.displayName
-      })
+        doctorName: currentUser?.displayName || currentUser?.email || 'Desconhecido'
+      }
+      if (currentUser?.uid) payload.createdBy = currentUser.uid
+      await addDoc(collection(db, 'documents'), payload)
       toast.success('Documento cadastrado com sucesso!')
       setShowModal(false)
       setFormData({

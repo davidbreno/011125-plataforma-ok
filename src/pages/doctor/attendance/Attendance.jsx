@@ -79,19 +79,21 @@ export default function Attendance() {
     e.preventDefault()
     try {
       if (editingAttendance) {
-        await updateDoc(doc(db, 'attendances', editingAttendance.id), {
+        const updatePayload = {
           ...formData,
           updatedAt: serverTimestamp(),
-          updatedBy: currentUser.uid
-        })
+        }
+        if (currentUser?.uid) updatePayload.updatedBy = currentUser.uid
+        await updateDoc(doc(db, 'attendances', editingAttendance.id), updatePayload)
         toast.success('Atendimento atualizado com sucesso!')
       } else {
-        await addDoc(collection(db, 'attendances'), {
+        const createPayload = {
           ...formData,
-          doctorName: currentUser.displayName || currentUser.email,
+          doctorName: currentUser?.displayName || currentUser?.email || 'Desconhecido',
           createdAt: serverTimestamp(),
-          createdBy: currentUser.uid
-        })
+        }
+        if (currentUser?.uid) createPayload.createdBy = currentUser.uid
+        await addDoc(collection(db, 'attendances'), createPayload)
         toast.success('Atendimento registrado com sucesso!')
       }
       setShowModal(false)
