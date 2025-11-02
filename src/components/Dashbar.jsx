@@ -8,33 +8,29 @@ export default function Dashbar({ items = [], userRole = 'doctor' }) {
     <aside 
       className="hidden md:block fixed left-0 top-0 h-full w-64 z-40" 
       style={{ 
-        backgroundColor: 'var(--color-sidebar)',
-        borderRight: '1px solid var(--color-border)',
+        background: 'linear-gradient(180deg, #1d2839 0%, #17202e 100%)',
+        border: '2px solid #12e9eb',
+        borderLeft: 'none',
+        borderRadius: '0 20px 20px 0',
+        margin: '10px 0',
+        height: 'calc(100% - 20px)',
         boxShadow: '4px 0 12px rgba(0,0,0,0.03)'
       }}
     >
       <div className="h-full flex flex-col p-5">
         {/* Profile */}
-        <div className="flex items-center gap-3 mb-6 pb-5" style={{ borderBottom: '1px solid var(--color-border)' }}>
-          <div 
-            className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm" 
-            style={{ 
-              background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%)',
-              boxShadow: '0 2px 8px rgba(200,134,84,0.25)'
-            }}
-          >
-            DB
+        <div className="flex items-center gap-3 mb-6 pb-5" style={{ borderBottom: '2px solid #12e9eb' }}>
+          <div className="w-20 h-20 flex items-center justify-center">
+            <img 
+              src="/logo-db.png" 
+              alt="Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-bold truncate" style={{ color: 'var(--color-text)' }}>Dr. David Breno</div>
+            <div className="text-lg font-bold truncate" style={{ color: 'var(--color-text)', fontFamily: 'serif' }}>Dr. David Breno</div>
             <div className="text-xs truncate" style={{ color: 'var(--color-text-light)' }}>Workspace principal</div>
           </div>
-          <button 
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-opacity-80 transition-all" 
-            style={{ color: 'var(--color-text-light)' }}
-          >
-            <FaGear className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Navigation Sections */}
@@ -51,7 +47,7 @@ export default function Dashbar({ items = [], userRole = 'doctor' }) {
                   to={it.path}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative overflow-hidden"
                   style={{
-                    backgroundColor: pathname === it.path ? 'var(--color-secondary)' : 'transparent',
+                    backgroundColor: pathname === it.path ? '#101a29' : 'transparent',
                     color: pathname === it.path ? 'var(--color-primary)' : 'var(--color-text)',
                     fontWeight: pathname === it.path ? '600' : '500'
                   }}
@@ -82,7 +78,7 @@ export default function Dashbar({ items = [], userRole = 'doctor' }) {
                   to={it.path}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative overflow-hidden"
                   style={{
-                    backgroundColor: pathname === it.path ? 'var(--color-secondary)' : 'transparent',
+                    backgroundColor: pathname === it.path ? '#101a29' : 'transparent',
                     color: pathname === it.path ? 'var(--color-primary)' : 'var(--color-text)',
                     fontWeight: pathname === it.path ? '600' : '500'
                   }}
@@ -110,7 +106,7 @@ export default function Dashbar({ items = [], userRole = 'doctor' }) {
                   to={it.path}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative overflow-hidden"
                   style={{
-                    backgroundColor: pathname === it.path ? 'var(--color-secondary)' : 'transparent',
+                    backgroundColor: pathname === it.path ? '#101a29' : 'transparent',
                     color: pathname === it.path ? 'var(--color-primary)' : 'var(--color-text)',
                     fontWeight: pathname === it.path ? '600' : '500'
                   }}
@@ -130,7 +126,7 @@ export default function Dashbar({ items = [], userRole = 'doctor' }) {
         </nav>
 
         {/* Footer - Configurações fixas no bottom */}
-        <div className="pt-4" style={{ borderTop: '1px solid var(--color-border)' }}>
+        <div className="pt-4" style={{ borderTop: '2px solid #12e9eb' }}>
           <Link
             to={`/${userRole}/configuracoes`}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all"

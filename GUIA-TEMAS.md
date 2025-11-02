@@ -69,7 +69,7 @@ Cada tema tem **13 cores** que controlam toda a interface:
     'primary-hover': '#b57544',
     secondary: '#e8d5c4',      // Bege rosado
     accent: '#8b6f47',         // Marrom médio
-    bg: '#faf8f6',             // Bege muito claro
+    bg: '#3f3525ff',             // Bege muito claro
     'bg-secondary': '#f5f2ef', // Bege claro
     surface: '#ffffff',        // Branco
     text: '#4a4a4a',           // Cinza escuro

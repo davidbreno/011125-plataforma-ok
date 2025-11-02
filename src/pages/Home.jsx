@@ -23,7 +23,8 @@ export default function Home() {
           display: flex;
           align-items: center;
           justify-content: center;
-          background-color: var(--color-bg);
+          background: linear-gradient(135deg, #080d17 0%, #0e141e 50%, #080d17 100%);
+          background-attachment: fixed;
           font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial;
         }
         .home-landing .container {
@@ -112,11 +113,9 @@ export default function Home() {
 
       <main className="container" role="main" aria-label="Tela de boas-vindas">
         <div className="logo-container">
-          <div className="logo-circle">
-            <div className="logo-text">LC</div>
-          </div>
+          <img src="/logo-db.png" alt="Logo Dr. David Breno" style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
         </div>
-        <h1>Bem-vindo ao Life Clinic<br/>Management System</h1>
+        <h1>Consultório Dr. David Breno</h1>
         <p>Preparando tudo para você. Redirecionando para o login em instantes...</p>
         <div className="loader" aria-hidden="true"></div>
         <div className="hint" aria-hidden="true">Você será redirecionado em cerca de 5 segundos.</div>

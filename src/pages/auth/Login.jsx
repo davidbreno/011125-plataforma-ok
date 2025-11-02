@@ -87,10 +87,16 @@ export default function Login() {
       {/* Main Content */}
       <div className="relative z-10 min-h-screen flex items-center justify-center p-6">
         <div className="w-full max-w-6xl">
-          <div className="rounded-2xl overflow-hidden shadow-none flex flex-col md:flex-row">
+          <div className="rounded-2xl overflow-hidden flex flex-col md:flex-row" style={{ boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)' }}>
             {/* Left panel (art + marketing) */}
-            <div className="md:w-1/2 p-12 flex flex-col justify-center bg-marble">
-              <div className="max-w-lg">
+            <div className="md:w-1/2 p-12 flex flex-col justify-center relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #121b2a 0%, #172234 100%)' }}>
+              {/* Textura escura no fundo */}
+              <div className="absolute inset-0 opacity-30" style={{ 
+                backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px),
+                                  repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px)`,
+                backgroundSize: '20px 20px'
+              }}></div>
+              <div className="max-w-lg relative z-10">
                 <img src={logoSrc} alt="Logo" className="w-96 md:w-[896px] h-auto mb-4 object-contain mx-auto" />
                 <h2 className="text-3xl font-extrabold text-white mb-2 -mt-3">Transforme sorrisos, simplifique sua rotina</h2>
                 <p className="text-sm text-white/90">Uma plataforma inteligente feita para o dentista moderno. Eficiência, controle e praticidade em um só lugar.</p>
@@ -101,8 +107,8 @@ export default function Login() {
             <div className="md:w-1/2 p-12" style={{ backgroundColor: 'var(--color-bg)' }}>
               <div className="max-w-md mx-auto">
                 <div className="text-left mb-6">
-                  <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-text)' }}>Sign in</h1>
-                  <p className="text-sm" style={{ color: 'var(--color-text-light)' }}>Entre com seu usuário</p>
+                  <h1 className="text-2xl font-semibold" style={{ color: '#121b2a' }}>Sign in</h1>
+                  <p className="text-sm" style={{ color: '#121b2a' }}>Entre com seu usuário</p>
                 </div>
 
                 <div className="card-surface">

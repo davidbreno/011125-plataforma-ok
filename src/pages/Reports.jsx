@@ -31,7 +31,7 @@ export default function Reports() {
   ]
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #080d17 0%, #0e141e 50%, #080d17 100%)', backgroundAttachment: 'fixed' }}>
       {/* Header */}
       <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-card)' }}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
