@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../../hooks/useAuth'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import LogoutButton from '../../../components/LogoutButton'
 import { 
   User, 
   Calendar, 
@@ -18,8 +17,7 @@ import {
   CalendarCheck,
   ArrowLeft
 } from 'lucide-react'
-import { collection, onSnapshot, query, orderBy, updateDoc, doc, getDoc } from 'firebase/firestore'
-import { db } from '../../../firebase/config'
+import { supabase } from '../../../supabase/config'
 
 export default function DoctorAppointments() {
   const { currentUser } = useAuth()
@@ -32,96 +30,121 @@ export default function DoctorAppointments() {
   const [showPatientDetails, setShowPatientDetails] = useState(false)
 
   const [doctorName, setDoctorName] = useState('')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [formData, setFormData] = useState({
+    patientName: '',
+    patientPhone: '',
+    patientEmail: '',
+    patientAge: '',
+    patientGender: '',
+    appointmentDate: new Date().toISOString().split('T')[0],
+    appointmentTime: '',
+    appointmentType: 'consultation',
+    notes: ''
+  })
 
-  // Fetch doctor's name from staffData collection
+  // Buscar o nome do dentista no Supabase (tabela public.users)
   useEffect(() => {
     if (!currentUser) return
 
     const fetchDoctorName = async () => {
       try {
-        const userDocRef = doc(db, 'staffData', currentUser.uid)
-        const userDoc = await getDoc(userDocRef)
-        
-        if (userDoc.exists()) {
-          const userData = userDoc.data()
-          // Use fullName from staffData, fallback to displayName, then to 'Médico desconhecido'
-          const name = userData.fullName || currentUser.displayName || 'Médico desconhecido'
-          setDoctorName(name)
-        } else {
-          // Fallback to displayName if no staffData document exists
-          setDoctorName(currentUser.displayName || 'Médico desconhecido')
-        }
+        // Busca no perfil público (public.users) se existir; senão usa displayName/email
+        const { data, error } = await supabase
+          .from('users')
+          .select('full_name')
+          .eq('id', currentUser.id)
+          .maybeSingle()
+
+        if (error) throw error
+
+        const name = data?.full_name || currentUser.user_metadata?.full_name || 'Dr. David'
+        setDoctorName(name)
       } catch (error) {
         console.error('Error fetching doctor name:', error)
-        setDoctorName(currentUser.displayName || 'Médico desconhecido')
+        setDoctorName(currentUser?.user_metadata?.full_name || 'Dr. David')
       }
     }
 
     fetchDoctorName()
   }, [currentUser])
 
-  // Fetch appointments for the logged-in doctor
+  // Carregar atendimentos do dentista logado (Supabase)
   useEffect(() => {
     if (!currentUser || !doctorName) return
 
   toast.success('Carregando seus atendimentos...')
     
-    // Fetch all appointments and filter client-side to handle name variations
-    
-    const appointmentsRef = collection(db, 'appointments')
-    const q = query(appointmentsRef, orderBy('createdAt', 'desc'))
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const allAppointments = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
-      
-      // Filter appointments for this doctor with multiple name variations
-      const doctorAppointments = allAppointments.filter(appointment => {
-        const appointmentDoctorName = appointment.doctorName || ''
-        const currentDoctorName = doctorName || ''
-        
-        // Try exact match first
-        if (appointmentDoctorName === currentDoctorName) {
-          return true
-        }
-        
-        // Try case-insensitive match
-        if (appointmentDoctorName.toLowerCase() === currentDoctorName.toLowerCase()) {
-          return true
-        }
-        
-        // Try matching without "Dr." prefix
-        const cleanAppointmentName = appointmentDoctorName.replace(/^Dr\.\s*/i, '').trim()
-        const cleanCurrentName = currentDoctorName.replace(/^Dr\.\s*/i, '').trim()
-        if (cleanAppointmentName === cleanCurrentName) {
-          return true
-        }
-        
-        // Try matching with "Dr." prefix
-        const withDrAppointmentName = appointmentDoctorName.startsWith('Dr.') ? appointmentDoctorName : `Dr. ${appointmentDoctorName}`
-        const withDrCurrentName = currentDoctorName.startsWith('Dr.') ? currentDoctorName : `Dr. ${currentDoctorName}`
-        if (withDrAppointmentName === withDrCurrentName) {
-          return true
-        }
-        
-        return false
-      })
-      
-      setAppointments(doctorAppointments)
-      
-      if (doctorAppointments.length > 0) {
-        toast.success(`Carregados ${doctorAppointments.length} atendimentos`)
-      } else {
-        toast.success('Nenhum atendimento encontrado para você')
-      }
-    }, (error) => {
-      console.error('Error fetching appointments:', error)
-      toast.error('Erro ao carregar atendimentos')
-    })
+    let channel
 
-    return () => unsubscribe()
+    const load = async () => {
+      const doctorId = currentUser.id
+      // Primeiro, por id do médico
+      let { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('doctor_id', doctorId)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Erro ao buscar atendimentos:', error)
+        toast.error('Erro ao carregar atendimentos')
+        return
+      }
+
+      // Se não houver por id, tentar por nome (dados antigos)
+      if (!data || data.length === 0) {
+        try {
+          const byName = await supabase
+            .from('appointments')
+            .select('*')
+            .eq('doctor_name', doctorName)
+            .order('created_at', { ascending: false })
+          if (!byName.error) {
+            data = byName.data
+          } else {
+            // Ignora erro quando a coluna ainda não existe no schema (42703)
+            if (byName.error.code !== '42703') {
+              console.error('Erro ao buscar por nome:', byName.error)
+            }
+          }
+        } catch {
+          // Falha silenciosa quando coluna não existe
+        }
+      }
+
+      const mapped = (data || []).map(row => ({
+        id: row.id,
+        patientName: row.patient_name,
+        patientPhone: row.patient_phone,
+        patientEmail: row.patient_email,
+        patientAge: row.patient_age || '',
+        patientGender: row.patient_gender || '',
+        appointmentDate: row.appointment_date,
+        appointmentTime: row.appointment_time,
+        appointmentType: row.appointment_type || 'consultation',
+        status: row.status || 'scheduled',
+        notes: row.notes || '',
+        symptoms: row.symptoms || row.extra?.symptoms || '',
+        medicalHistory: row.medical_history || row.extra?.medical_history || '',
+        medications: row.medications || row.extra?.medications || '',
+        vitalSigns: row.vital_signs || row.extra?.vital_signs || {},
+        doctorId: row.doctor_id,
+        doctorName: row.doctor_name || doctorName
+      }))
+      setAppointments(mapped)
+      toast.success(`Carregados ${mapped.length} atendimentos`)
+    }
+
+    load()
+
+    channel = supabase
+      .channel('doctor-appointments')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, load)
+      .subscribe()
+
+    return () => { channel && supabase.removeChannel(channel) }
   }, [currentUser, doctorName])
 
   useEffect(() => {
@@ -159,6 +182,106 @@ export default function DoctorAppointments() {
     setFilteredAppointments(filtered)
   }, [appointments, selectedDate, viewMode, searchTerm])
 
+  // Helpers for scheduling within Doctor portal
+  const generateTimeSlots = () => {
+    const slots = []
+    for (let hour = 8; hour <= 18; hour++) {
+      const time = `${hour.toString().padStart(2, '0')}:00`
+      const display = hour < 12 ? `${hour}:00 AM` : `${hour === 12 ? 12 : hour - 12}:00 PM`
+      slots.push({ value: time, label: display })
+    }
+    return slots
+  }
+
+  const getMinDate = () => new Date().toISOString().split('T')[0]
+  const getMaxDate = () => {
+    const d = new Date()
+    d.setMonth(d.getMonth() + 1)
+    return d.toISOString().split('T')[0]
+  }
+
+  const validateForm = () => {
+    if (!formData.patientName.trim()) { toast.error('Informe o nome do paciente'); return false }
+    if (!formData.patientPhone.trim()) { toast.error('Informe o telefone'); return false }
+    if (!formData.patientEmail.trim()) { toast.error('Informe o e-mail'); return false }
+    if (!formData.appointmentDate) { toast.error('Selecione a data'); return false }
+    if (!formData.appointmentTime) { toast.error('Selecione o horário'); return false }
+    return true
+  }
+
+  const openCreate = () => {
+    setFormData({
+      patientName: '',
+      patientPhone: '',
+      patientEmail: '',
+      patientAge: '',
+      patientGender: '',
+      appointmentDate: getMinDate(),
+      appointmentTime: '',
+      appointmentType: 'consultation',
+      notes: ''
+    })
+    setShowCreateModal(true)
+  }
+
+  const handleCreate = async (e) => {
+    e.preventDefault()
+    if (!validateForm()) return
+    setSaving(true)
+    try {
+      const fullPayload = {
+        patient_name: formData.patientName,
+        patient_phone: formData.patientPhone,
+        patient_email: formData.patientEmail,
+        patient_age: formData.patientAge ? Number(formData.patientAge) : null,
+        patient_gender: formData.patientGender || null,
+        appointment_date: formData.appointmentDate,
+        appointment_time: formData.appointmentTime,
+        appointment_type: formData.appointmentType || 'consultation',
+        notes: formData.notes || null,
+        status: 'scheduled',
+        doctor_id: currentUser?.id || null,
+        doctor_name: doctorName,
+        created_by: currentUser?.id || null
+      }
+
+      // Tenta inserir com o payload completo (schema moderno)
+      let { error } = await supabase.from('appointments').insert(fullPayload)
+      if (error) {
+        // Quando colunas não existem no schema atual (ex.: "appointment_type" / "doctor_name" / "created_by"),
+        // fazemos fallback para um payload mínimo compatível com o schema simples.
+        const isMissingColumn =
+          error.code === 'PGRST204' ||
+          /column .* does not exist/i.test(error.message || '') ||
+          /Could not find the .* column/i.test(error.message || '')
+
+        if (isMissingColumn) {
+          const minimalPayload = {
+            patient_name: formData.patientName,
+            patient_phone: formData.patientPhone,
+            patient_email: formData.patientEmail,
+            appointment_date: formData.appointmentDate,
+            appointment_time: formData.appointmentTime,
+            status: 'scheduled',
+            notes: formData.notes || null,
+            doctor_id: currentUser?.id || null
+          }
+          const retry = await supabase.from('appointments').insert(minimalPayload)
+          if (retry.error) throw retry.error
+        } else {
+          throw error
+        }
+      }
+      toast.success('Atendimento agendado com sucesso')
+      setShowCreateModal(false)
+    } catch (err) {
+      console.error('Erro ao agendar:', err)
+      toast.error('Erro ao agendar atendimento')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const handleViewPatientDetails = (appointment) => {
     setSelectedAppointment(appointment)
     setShowPatientDetails(true)
@@ -180,11 +303,11 @@ export default function DoctorAppointments() {
 
   const handleCompleteAppointment = async (appointmentId) => {
     try {
-      const appointmentRef = doc(db, 'appointments', appointmentId)
-      await updateDoc(appointmentRef, {
-        status: 'completed',
-        updatedAt: new Date().toISOString()
-      })
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'completed', updated_at: new Date().toISOString() })
+        .eq('id', appointmentId)
+      if (error) throw error
       toast.success('Appointment marked as completed!')
     } catch (error) {
       console.error('Error completing appointment:', error)
@@ -194,11 +317,11 @@ export default function DoctorAppointments() {
 
   const handleCancelAppointment = async (appointmentId) => {
     try {
-      const appointmentRef = doc(db, 'appointments', appointmentId)
-      await updateDoc(appointmentRef, {
-        status: 'cancelled',
-        updatedAt: new Date().toISOString()
-      })
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+        .eq('id', appointmentId)
+      if (error) throw error
       toast.success('Appointment cancelled successfully!')
     } catch (error) {
       console.error('Error cancelling appointment:', error)
@@ -260,15 +383,24 @@ export default function DoctorAppointments() {
             </div>
             <div>
               <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>Atendimentos de Pacientes</h1>
-              <p className="text-sm" style={{ color: 'var(--color-text-light)' }}>Bem-vindo, {doctorName || 'Doutor'}</p>
+              <p className="text-sm" style={{ color: 'var(--color-text-light)' }}>Bem-vindo, {doctorName || 'Dr. David'}</p>
             </div>
           </div>
-          <button 
-            className="px-4 py-2 rounded-lg font-medium transition-colors"
-            style={{ backgroundColor: '#fee2e2', color: '#dc2626' }}
-          >
-            Sair
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={openCreate}
+              className="px-4 py-2 rounded-lg font-medium transition-colors"
+              style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+            >
+              Registrar
+            </button>
+            <button 
+              className="px-4 py-2 rounded-lg font-medium transition-colors"
+              style={{ backgroundColor: '#fee2e2', color: '#dc2626' }}
+            >
+              Sair
+            </button>
+          </div>
         </div>
       </header>
 
@@ -472,6 +604,116 @@ export default function DoctorAppointments() {
           </div>
         )}
       </main>
+
+      {/* Create Appointment Modal (Doctor) */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-800 border border-white/10 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold mb-6">Novo Atendimento</h2>
+            <form onSubmit={handleCreate} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Paciente</label>
+                  <input
+                    type="text"
+                    value={formData.patientName}
+                    onChange={(e) => setFormData({ ...formData, patientName: e.target.value })}
+                    className="w-full px-3 py-2 border border-white/10 rounded-lg"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Telefone</label>
+                  <input
+                    type="tel"
+                    value={formData.patientPhone}
+                    onChange={(e) => setFormData({ ...formData, patientPhone: e.target.value })}
+                    className="w-full px-3 py-2 border border-white/10 rounded-lg"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">E-mail</label>
+                  <input
+                    type="email"
+                    value={formData.patientEmail}
+                    onChange={(e) => setFormData({ ...formData, patientEmail: e.target.value })}
+                    className="w-full px-3 py-2 border border-white/10 rounded-lg"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Data</label>
+                  <input
+                    type="date"
+                    value={formData.appointmentDate}
+                    onChange={(e) => setFormData({ ...formData, appointmentDate: e.target.value })}
+                    min={getMinDate()}
+                    max={getMaxDate()}
+                    className="w-full px-3 py-2 border border-white/10 rounded-lg"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Horário</label>
+                  <select
+                    value={formData.appointmentTime}
+                    onChange={(e) => setFormData({ ...formData, appointmentTime: e.target.value })}
+                    className="w-full px-3 py-2 border border-white/10 rounded-lg [&>option]:text-black [&>option]:bg-white"
+                    required
+                  >
+                    <option value="">Selecione</option>
+                    {generateTimeSlots().map((slot) => (
+                      <option key={slot.value} value={slot.value}>{slot.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Tipo</label>
+                  <select
+                    value={formData.appointmentType}
+                    onChange={(e) => setFormData({ ...formData, appointmentType: e.target.value })}
+                    className="w-full px-3 py-2 border border-white/10 rounded-lg [&>option]:text-black [&>option]:bg-white"
+                  >
+                    <option value="consultation">Consulta</option>
+                    <option value="checkup">Checkup</option>
+                    <option value="followup">Retorno</option>
+                    <option value="emergency">Emergência</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Observações</label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows="3"
+                  className="w-full px-3 py-2 border border-white/10 rounded-lg"
+                  placeholder="Detalhes adicionais"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 border border-white/20 text-white rounded-lg hover:bg-white/10"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg disabled:opacity-50"
+                >
+                  {saving ? 'Registrando...' : 'Registrar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Patient Details Modal */}
       {showPatientDetails && selectedAppointment && (

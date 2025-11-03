@@ -217,10 +217,10 @@ export default function Signup() {
                     placeholder="Digite seu nome completo"
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    className={`w-full pl-12 pr-4 py-4 bg-white/5 border-2 rounded-2xl text-white placeholder-slate-400 outline-none transition-all duration-300 ${
+                    className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl placeholder-slate-400 outline-none transition-all duration-300 ${
                       errors.fullName 
-                        ? 'border-red-400 focus:border-red-400 focus:bg-red-400/10' 
-                        : 'border-white/10 focus:border-blue-400 focus:bg-white/10 focus:shadow-lg focus:shadow-blue-400/20'
+                        ? 'border-red-400 focus:border-red-400' 
+                        : 'border-white/10 focus:border-blue-400 focus:shadow-lg focus:shadow-blue-400/20'
                     }`}
                     required
                   />
@@ -245,10 +245,10 @@ export default function Signup() {
                     placeholder="Digite seu e‑mail"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={`w-full pl-12 pr-4 py-4 bg-white/5 border-2 rounded-2xl text-white placeholder-slate-400 outline-none transition-all duration-300 ${
+                    className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl placeholder-slate-400 outline-none transition-all duration-300 ${
                       errors.email 
-                        ? 'border-red-400 focus:border-red-400 focus:bg-red-400/10' 
-                        : 'border-white/10 focus:border-blue-400 focus:bg-white/10 focus:shadow-lg focus:shadow-blue-400/20'
+                        ? 'border-red-400 focus:border-red-400' 
+                        : 'border-white/10 focus:border-blue-400 focus:shadow-lg focus:shadow-blue-400/20'
                     }`}
                     required
                   />
@@ -273,10 +273,10 @@ export default function Signup() {
                     placeholder="Crie uma senha segura"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className={`w-full pl-12 pr-12 py-4 bg-white/5 border-2 rounded-2xl text-white placeholder-slate-400 outline-none transition-all duration-300 ${
+                    className={`w-full pl-12 pr-12 py-4 border-2 rounded-2xl placeholder-slate-400 outline-none transition-all duration-300 ${
                       errors.password 
-                        ? 'border-red-400 focus:border-red-400 focus:bg-red-400/10' 
-                        : 'border-white/10 focus:border-blue-400 focus:bg-white/10 focus:shadow-lg focus:shadow-blue-400/20'
+                        ? 'border-red-400 focus:border-red-400' 
+                        : 'border-white/10 focus:border-blue-400 focus:shadow-lg focus:shadow-blue-400/20'
                     }`}
                     required
                   />
@@ -309,10 +309,10 @@ export default function Signup() {
                     placeholder="Confirme sua senha"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    className={`w-full pl-12 pr-12 py-4 bg-white/5 border-2 rounded-2xl text-white placeholder-slate-400 outline-none transition-all duration-300 ${
+                    className={`w-full pl-12 pr-12 py-4 border-2 rounded-2xl placeholder-slate-400 outline-none transition-all duration-300 ${
                       errors.confirmPassword 
-                        ? 'border-red-400 focus:border-red-400 focus:bg-red-400/10' 
-                        : 'border-white/10 focus:border-blue-400 focus:bg-white/10 focus:shadow-lg focus:shadow-blue-400/20'
+                        ? 'border-red-400 focus:border-red-400' 
+                        : 'border-white/10 focus:border-blue-400 focus:shadow-lg focus:shadow-blue-400/20'
                     }`}
                     required
                   />

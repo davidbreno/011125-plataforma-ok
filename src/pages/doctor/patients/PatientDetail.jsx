@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import OdontogramaViewer from '../../../components/OdontogramaViewer'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { FaArrowLeft, FaCheck, FaClock, FaFileContract, FaPlus, FaPrint, FaTooth, FaUser } from 'react-icons/fa'
-import { collection, doc, getDoc, onSnapshot, addDoc, updateDoc, serverTimestamp, query, where, orderBy } from 'firebase/firestore'
-import { db } from '../../../firebase/config'
+import { supabase } from '../../../supabase/config'
 import { useAuth } from '../../../hooks/useAuth'
 import toast from 'react-hot-toast'
 
@@ -68,88 +68,136 @@ export default function PatientDetail() {
     }
   })
 
-  // Load patient
+  // Load patient (Supabase)
   useEffect(() => {
-    (async () => {
+    let cancelled = false
+    ;(async () => {
       try {
-        const ref = doc(db, 'patients', id)
-        const snap = await getDoc(ref)
-        if (!snap.exists()) {
+        const { data, error } = await supabase
+          .from('patients')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle()
+        if (error) throw error
+        if (!data) {
           toast.error('Paciente não encontrado')
           navigate('/doctor/patients')
           return
         }
-        setPatient({ id: snap.id, ...snap.data() })
+        if (!cancelled) setPatient(data)
       } catch (e) {
         console.error(e)
         toast.error('Erro ao carregar paciente')
       }
     })()
+    return () => { cancelled = true }
   }, [id, navigate])
 
   // Realtime budgets for this patient
+  // Budgets (Supabase)
   useEffect(() => {
     if (!id) return
-    const q = query(collection(db, 'budgets'), where('patientId', '==', id), orderBy('createdAt', 'desc'))
-    const unsub = onSnapshot(q, (snap) => {
-      setBudgets(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-    })
-    return () => unsub()
+    let cancelled = false
+    ;(async () => {
+      try {
+        let query = supabase.from('budgets').select('*').eq('patientId', id)
+        let { data, error } = await query.order('created_at', { ascending: false })
+        if (error && error.code === '42703') {
+          const res2 = await supabase.from('budgets').select('*').eq('patientId', id).order('date', { ascending: false })
+          data = res2.data; error = res2.error
+        }
+        if (error) throw error
+        if (!cancelled) setBudgets(data || [])
+      } catch (e) {
+        console.error(e)
+      }
+    })()
+    return () => { cancelled = true }
   }, [id])
-
-  // Realtime anamneses
+  // Anamneses (Supabase)
   useEffect(() => {
     if (!id) return
-    const q = query(collection(db, 'anamneses'), where('patientId', '==', id), orderBy('createdAt', 'desc'))
-    const unsub = onSnapshot(q, (snap) => {
-      setAnamneses(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-    })
-    return () => unsub()
+    let cancelled = false
+    ;(async () => {
+      try {
+        let query = supabase.from('anamneses').select('*').eq('patientId', id)
+        let { data, error } = await query.order('created_at', { ascending: false })
+        if (error && error.code === '42703') {
+          const res2 = await supabase.from('anamneses').select('*').eq('patientId', id).order('date', { ascending: false })
+          data = res2.data; error = res2.error
+        }
+        if (error) throw error
+        if (!cancelled) setAnamneses(data || [])
+      } catch (e) {
+        console.error(e)
+      }
+    })()
+    return () => { cancelled = true }
   }, [id])
-
-  // Realtime attendances for overview (by patientName fallback)
+  // Attendances overview (Supabase; fallback por nome)
   const [attendances, setAttendances] = useState([])
   useEffect(() => {
-    if (!patient?.name) return
-    const q = query(collection(db, 'attendances'), where('patientName', '==', patient.name), orderBy('createdAt', 'desc'))
-    const unsub = onSnapshot(q, (snap) => setAttendances(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
-    return () => unsub()
-  }, [patient?.name])
-
-  const totalBudget = useMemo(() => {
-    const sum = budgetForm.items.reduce((acc, it) => acc + (parseFloat(it.value) || 0), 0)
-    return sum
-  }, [budgetForm.items])
-
-  const teethPermanent = useMemo(() => ([
-    // Upper right to upper left: 18..11
-    [18,17,16,15,14,13,12,11],
-    // Upper left to upper right: 21..28
-    [21,22,23,24,25,26,27,28],
-    // Lower right to lower left: 48..41
-    [48,47,46,45,44,43,42,41],
-    // Lower left to lower right: 31..38
-    [31,32,33,34,35,36,37,38]
-  ]), [])
-
-  const teethDeciduous = useMemo(() => ([
-    // Upper right to upper left: 55..51
-    [55,54,53,52,51],
-    // Upper left to upper right: 61..65
-    [61,62,63,64,65],
-    // Lower right to lower left: 85..81
-    [85,84,83,82,81],
-    // Lower left to lower right: 71..75
-    [71,72,73,74,75]
-  ]), [])
-
-  const toggleTooth = (n) => {
-    setBudgetForm((prev) => {
-      const exists = prev.selectedTeeth.includes(n)
-      const selectedTeeth = exists ? prev.selectedTeeth.filter(t => t !== n) : [...prev.selectedTeeth, n]
-      return { ...prev, selectedTeeth }
-    })
+    if (!patient?.name && !id) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        let { data, error } = await supabase
+          .from('attendances')
+          .select('*')
+          .eq('patientId', id)
+          .order('created_at', { ascending: false })
+        if (error) {
+          const res2 = await supabase
+            .from('attendances')
+            .select('*')
+            .eq('patientName', patient?.name || '')
+            .order('createdAt', { ascending: false })
+          data = res2.data; error = res2.error
+        }
+        if (error) throw error
+        if (!cancelled) setAttendances(data || [])
+      } catch (e) {
+        console.error(e)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [patient?.name, id])
+  
+  // Helpers para recarregar listas após operações
+  const refreshBudgets = async () => {
+    try {
+      let query = supabase.from('budgets').select('*').eq('patientId', id)
+      let { data, error } = await query.order('created_at', { ascending: false })
+      if (error && error.code === '42703') {
+        const res2 = await supabase.from('budgets').select('*').eq('patientId', id).order('date', { ascending: false })
+        data = res2.data; error = res2.error
+      }
+      if (error) throw error
+      setBudgets(data || [])
+    } catch (e) {
+      console.error(e)
+    }
   }
+
+  const refreshAnamneses = async () => {
+    try {
+      let query = supabase.from('anamneses').select('*').eq('patientId', id)
+      let { data, error } = await query.order('created_at', { ascending: false })
+      if (error && error.code === '42703') {
+        const res2 = await supabase.from('anamneses').select('*').eq('patientId', id).order('date', { ascending: false })
+        data = res2.data; error = res2.error
+      }
+      if (error) throw error
+      setAnamneses(data || [])
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  // Total e inclusão de itens de tratamento
+  const totalBudget = useMemo(() => {
+    return budgetForm.items.reduce((acc, it) => acc + (parseFloat(it.value) || 0), 0)
+  }, [budgetForm.items])
 
   const addTreatmentItem = () => {
     if (!budgetForm.procedure || !budgetForm.value) {
@@ -170,7 +218,6 @@ export default function PatientDetail() {
       selectedTeeth: []
     }))
   }
-
   const saveBudget = async () => {
     try {
       if (!isUserReady) {
@@ -193,28 +240,56 @@ export default function PatientDetail() {
         dueDay: parseInt(budgetForm.dueDay) || 5,
         status: 'em_orcamento',
         total: budgetForm.items.reduce((acc, it) => acc + (parseFloat(it.value)||0), 0),
-        createdAt: serverTimestamp(),
+        createdBy: currentUser?.uid || null
       }
-      if (currentUser?.uid) payload.createdBy = currentUser.uid
-      await addDoc(collection(db, 'budgets'), payload)
+      const { error } = await supabase.from('budgets').insert(payload)
+      if (error) throw error
       toast.success('Orçamento salvo!')
       setBudgetForm({
         description: '', plan: 'Particular', responsible: '', date: new Date().toISOString().slice(0,10),
         items: [], procedure: '', value: '', dentition: 'permanentes', selectedTeeth: [], installments: 1, dueDay: 5
       })
+  refreshBudgets()
     } catch (e) {
       console.error(e)
       toast.error('Erro ao salvar orçamento')
     }
   }
-
   const approveBudget = async (b) => {
     try {
-      await updateDoc(doc(db, 'budgets', b.id), { status: 'aprovado', approvedAt: serverTimestamp() })
+      const { error } = await supabase
+        .from('budgets')
+        .update({ status: 'aprovado', approvedAt: new Date().toISOString() })
+        .eq('id', b.id)
+      if (error) throw error
       toast.success('Orçamento aprovado')
+  refreshBudgets()
     } catch (e) {
       console.error(e)
       toast.error('Erro ao aprovar orçamento')
+    }
+  }
+  const saveAnamnese = async () => {
+    try {
+      if (!isUserReady) {
+        toast.error('Sessão do usuário ainda não carregou. Tente novamente em alguns segundos.')
+        return
+      }
+      const payload = {
+        patientId: id,
+        patientName: patient?.name || '',
+        model: anamneseForm.model,
+        date: anamneseForm.date,
+        answers: anamneseForm.answers,
+        createdBy: currentUser?.uid || null
+      }
+      const { error } = await supabase.from('anamneses').insert(payload)
+      if (error) throw error
+      toast.success('Anamnese salva')
+  refreshAnamneses()
+    } catch (e) {
+      console.error(e)
+      toast.error('Erro ao salvar anamnese')
     }
   }
 
@@ -241,28 +316,7 @@ export default function PatientDetail() {
     win.document.close()
   }
 
-  const saveAnamnese = async () => {
-    try {
-      if (!isUserReady) {
-        toast.error('Sessão do usuário ainda não carregou. Tente novamente em alguns segundos.')
-        return
-      }
-      const payload = {
-        patientId: id,
-        patientName: patient?.name || '',
-        model: anamneseForm.model,
-        date: anamneseForm.date,
-        answers: anamneseForm.answers,
-        createdAt: serverTimestamp(),
-      }
-      if (currentUser?.uid) payload.createdBy = currentUser.uid
-      await addDoc(collection(db, 'anamneses'), payload)
-      toast.success('Anamnese salva')
-    } catch (e) {
-      console.error(e)
-      toast.error('Erro ao salvar anamnese')
-    }
-  }
+  
 
   if (!patient) {
     return (
@@ -448,37 +502,25 @@ export default function PatientDetail() {
                   <option value="deciduos">Decíduos</option>
                 </select>
               </div>
-            </div>
+</div>
 
-            {/* Odontogram */}
+            {/* Odontograma (HTML interativo) */}
             <div className="mt-6">
               <div className="flex items-center gap-2 mb-2">
                 <FaTooth style={{ color: 'var(--color-text-light)' }} />
-                <span className="text-sm" style={{ color: 'var(--color-text-light)' }}>Selecione os dentes/regiões:</span>
+                <span className="text-sm" style={{ color: 'var(--color-text-light)' }}>
+                  Selecione os dentes/regiões no odontograma abaixo:
+                </span>
               </div>
-              <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--color-bg)', border:'1px dashed var(--color-border)' }}>
-                {(budgetForm.dentition === 'permanentes' ? teethPermanent : teethDeciduous).map((row, idx) => (
-                  <div key={idx} className="flex justify-center gap-2 mb-3">
-                    {row.map((n) => {
-                      const selected = budgetForm.selectedTeeth.includes(n)
-                      return (
-                        <button
-                          key={n}
-                          onClick={() => toggleTooth(n)}
-                          type="button"
-                          className="w-8 h-8 rounded text-xs font-medium"
-                          style={{
-                            backgroundColor: selected ? 'var(--color-primary)' : 'transparent',
-                            color: selected ? '#0b111b' : 'var(--color-text-light)',
-                            border: '1px solid var(--color-border)'
-                          }}
-                        >
-                          {n}
-                        </button>
-                      )
-                    })}
-                  </div>
-                ))}
+              <div className="rounded-lg" style={{ backgroundColor: 'transparent', border:'1px dashed var(--color-border)' }}>
+                {/* Importa o componente de visualização do odontograma */}
+                {/** Nota: o componente lê elementos [data-tooth] no HTML e envia a seleção via callback */}
+                <OdontogramaViewer
+                  key={budgetForm.dentition}
+                  tipoInicial={budgetForm.dentition === 'permanentes' ? 'permanente' : 'deciduo'}
+                  selectedTeeth={budgetForm.selectedTeeth}
+                  onChangeSelectedTeeth={(teeth) => setBudgetForm(v => ({ ...v, selectedTeeth: teeth }))}
+                />
               </div>
               <div className="flex items-center justify-between mt-3 text-sm" style={{ color: 'var(--color-text-light)' }}>
                 <div>Dentes selecionados: {budgetForm.selectedTeeth.sort((a,b)=>a-b).join(', ') || '—'}</div>

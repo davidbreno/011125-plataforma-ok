@@ -14,12 +14,11 @@ import {
   FaEye,
   FaArrowLeft
 } from 'react-icons/fa'
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore'
-import { db } from '../../../firebase/config'
+import { supabase } from '../../../supabase/config'
 
 export default function Patients() {
   const { currentUser } = useAuth()
-  const isUserReady = !!(currentUser && currentUser.uid)
+  const userId = currentUser?.uid || currentUser?.id || null
   const navigate = useNavigate()
   const [patients, setPatients] = useState([])
   const [filteredPatients, setFilteredPatients] = useState([])
@@ -37,18 +36,41 @@ export default function Patients() {
     allergies: ''
   })
 
-  // Fetch patients
+  // Fetch patients (Supabase)
   useEffect(() => {
-    const patientsRef = collection(db, 'patients')
-    const unsubscribe = onSnapshot(patientsRef, (snapshot) => {
-      const patientsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
+    let mounted = true
+    const fetchPatients = async () => {
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (!mounted) return
+      if (error) {
+        console.error('Erro ao carregar pacientes:', error)
+        toast.error('Erro ao carregar pacientes')
+        return
+      }
+      const mapped = (data || []).map(p => ({
+        id: p.id,
+        name: p.full_name || '',
+        email: p.email || '',
+        phone: p.phone || '',
+        cpf: p.cpf || '',
+        birthDate: p.birth_date || '',
+        address: p.address || '',
+        medicalHistory: p.medical_history || '',
+        allergies: p.allergies || '',
+        createdAt: p.created_at,
       }))
-      setPatients(patientsData)
-      setFilteredPatients(patientsData)
-    })
-    return () => unsubscribe()
+      setPatients(mapped)
+      setFilteredPatients(mapped)
+    }
+    fetchPatients()
+    const channel = supabase
+      .channel('patients_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, fetchPatients)
+      .subscribe()
+    return () => { mounted = false; supabase.removeChannel(channel) }
   }, [])
 
   // Search filter
@@ -69,34 +91,52 @@ export default function Patients() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      // Ensure session is loaded to safely tag createdBy/updatedBy
-      if (!currentUser || !currentUser.uid) {
-        toast.error('Sessão do usuário ainda não carregou. Tente novamente em alguns segundos.')
-        return
+      const payload = {
+        full_name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        cpf: formData.cpf || null,
+        birth_date: formData.birthDate || null,
+        address: formData.address || null,
+        medical_history: formData.medicalHistory || null,
+        allergies: formData.allergies || null,
+        updated_by: userId || null,
       }
-      // Remove empty/undefined fields
-      const cleanData = Object.entries(formData).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== undefined && value !== null) {
-          acc[key] = value
-        }
-        return acc
-      }, {})
-
       if (editingPatient) {
-        const updatePayload = {
-          ...cleanData,
-          updatedAt: serverTimestamp(),
+        let { error } = await supabase
+          .from('patients')
+          .update(payload)
+          .eq('id', editingPatient.id)
+        // Fallback se alguma coluna não existir ainda (ex.: cpf)
+        if (error && (error.code === 'PGRST204' || error.code === '42703')) {
+          const minimal = { ...payload }
+          delete minimal.cpf
+          delete minimal.medical_history
+          delete minimal.allergies
+          const retry = await supabase
+            .from('patients')
+            .update(minimal)
+            .eq('id', editingPatient.id)
+          error = retry.error
         }
-        if (currentUser && currentUser.uid) updatePayload.updatedBy = currentUser.uid
-        await updateDoc(doc(db, 'patients', editingPatient.id), updatePayload)
+        if (error) throw error
         toast.success('Paciente atualizado com sucesso!')
       } else {
-        const createPayload = {
-          ...cleanData,
-          createdAt: serverTimestamp(),
+        let { error } = await supabase
+          .from('patients')
+          .insert([{ ...payload, created_by: userId || null }])
+        // Fallback se alguma coluna não existir ainda (ex.: cpf)
+        if (error && (error.code === 'PGRST204' || error.code === '42703')) {
+          const minimal = { ...payload }
+          delete minimal.cpf
+          delete minimal.medical_history
+          delete minimal.allergies
+          const retry = await supabase
+            .from('patients')
+            .insert([{ ...minimal, created_by: userId || null }])
+          error = retry.error
         }
-        if (currentUser && currentUser.uid) createPayload.createdBy = currentUser.uid
-        await addDoc(collection(db, 'patients'), createPayload)
+        if (error) throw error
         toast.success('Paciente cadastrado com sucesso!')
       }
       setShowModal(false)
@@ -135,7 +175,8 @@ export default function Patients() {
   const handleDelete = async (patientId) => {
     if (window.confirm('Tem certeza que deseja excluir este paciente?')) {
       try {
-        await deleteDoc(doc(db, 'patients', patientId))
+        const { error } = await supabase.from('patients').delete().eq('id', patientId)
+        if (error) throw error
         toast.success('Paciente excluído com sucesso!')
       } catch (error) {
         console.error('Error:', error)
@@ -189,9 +230,9 @@ export default function Patients() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2.5 rounded-lg w-full outline-none"
               style={{ 
-                backgroundColor: '#ffffff', 
-                border: '1px solid var(--color-border)',
-                color: '#000000'
+                backgroundColor: 'var(--input-bg)', 
+                border: '1px solid var(--input-border)',
+                color: 'var(--input-text)'
               }}
             />
           </div>
@@ -392,12 +433,11 @@ export default function Patients() {
                 <button
                   type="submit"
                   className="flex-1 btn-primary"
-                  disabled={!isUserReady}
-                  style={!isUserReady ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                  
                 >
                   {editingPatient ? 'Atualizar' : 'Cadastrar'}
                 </button>
-                {!isUserReady && (
+                {!userId && (
                   <span className="text-sm" style={{ color: 'var(--color-text-light)' }}>
                     Carregando sessão...
                   </span>

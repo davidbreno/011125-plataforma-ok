@@ -23,9 +23,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:5176": "vite --port 5176 --strictPort --host",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "migrate:anamneses": "node scripts/migrate-anamneses.js",
+    "migrate:budgets": "node scripts/migrate-budgets.js",
+    "migrate:attendances": "node scripts/migrate-attendances.js",
+    "migrate:appointments": "node scripts/migrate-appointments.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.78.0",

@@ -36,6 +36,7 @@ export default function CreatePrescription() {
   const [filteredMedicines, setFilteredMedicines] = useState([])
     const [showMedicineDropdown, setShowMedicineDropdown] = useState(false)
   const [showPatientModal, setShowPatientModal] = useState(false)
+  const [manualPatient, setManualPatient] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [patientSearchTerm, setPatientSearchTerm] = useState('')
@@ -259,6 +260,7 @@ export default function CreatePrescription() {
       patientPhone: patient.phone,
       patientEmail: patient.email
     }))
+    setManualPatient(false)
     setShowPatientModal(false)
     setPatientSearchTerm('')
     toast.success(`Selected patient: ${patient.name}`)
@@ -355,12 +357,15 @@ export default function CreatePrescription() {
     setLoading(true)
     
     try {
-      const prescriptionData = {
+      const baseData = {
         ...formData,
-        doctorName: currentUser.displayName || 'Médico desconhecido',
-        doctorId: currentUser.uid,
+        doctorName: currentUser?.displayName || 'Dentista desconhecido',
         updatedAt: new Date().toISOString()
       }
+      // Only include doctorId when available to avoid Firestore undefined error
+      const prescriptionData = currentUser?.uid
+        ? { ...baseData, doctorId: currentUser.uid }
+        : baseData
 
       if (isEditMode) {
         // Update existing prescription
@@ -369,8 +374,8 @@ export default function CreatePrescription() {
         toast.success('Prescrição atualizada com sucesso!')
       } else {
         // Create new prescription
-        prescriptionData.createdAt = new Date().toISOString()
-        await addDoc(collection(db, 'prescriptions'), prescriptionData)
+        const toCreate = { ...prescriptionData, createdAt: new Date().toISOString() }
+        await addDoc(collection(db, 'prescriptions'), toCreate)
         toast.success('Prescrição criada com sucesso!')
       }
       
@@ -386,10 +391,10 @@ export default function CreatePrescription() {
 
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <div className="min-h-screen p-8 bg-hero-dark">
       {/* Header */}
-      <header className="card-surface border-b" style={{ borderColor: 'var(--color-border)' }}>
-        <div className="max-w-7xl mx-auto flex justify-between items-center p-4">
+      <header className="card-surface border-b p-4 mb-6" style={{ borderColor: 'var(--color-border)', borderRadius: '1.5rem' }}>
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <Link 
               to="/doctor/prescriptions"
@@ -438,30 +443,61 @@ export default function CreatePrescription() {
             
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text)' }}>Selecionar Paciente</label>
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      placeholder="Clique para selecionar um paciente..."
-                      value={formData.patientName}
-                      readOnly
-                      className="flex-1 px-3 py-2 border rounded-lg focus:outline-none cursor-pointer"
-                      style={{ 
-                        backgroundColor: 'var(--color-bg)', 
-                        borderColor: 'var(--color-border)',
-                        color: 'var(--color-text)'
-                      }}
-                      onClick={() => setShowPatientModal(true)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPatientModal(true)}
-                      className="btn-primary rounded-lg flex items-center space-x-2"
-                    >
-                      <Search className="w-4 h-4" />
-                      <span>Selecionar</span>
-                    </button>
-                  </div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text)' }}>
+                    {manualPatient ? 'Nome do Paciente' : 'Selecionar Paciente'}
+                  </label>
+                  {manualPatient ? (
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        placeholder="Digite o nome do paciente..."
+                        value={formData.patientName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, patientName: e.target.value }))}
+                        className="flex-1 px-3 py-2 border rounded-lg focus:outline-none"
+                        style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => { setManualPatient(false); setShowPatientModal(true) }}
+                        className="px-3 py-2 rounded-lg font-medium"
+                        style={{ backgroundColor: 'var(--color-secondary)', color: 'var(--color-text)' }}
+                      >
+                        Selecionar da agenda
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        placeholder="Clique para selecionar um paciente..."
+                        value={formData.patientName}
+                        readOnly
+                        className="flex-1 px-3 py-2 border rounded-lg focus:outline-none cursor-pointer"
+                        style={{ 
+                          backgroundColor: 'var(--color-bg)', 
+                          borderColor: 'var(--color-border)',
+                          color: 'var(--color-text)'
+                        }}
+                        onClick={() => setShowPatientModal(true)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPatientModal(true)}
+                        className="btn-primary rounded-lg flex items-center space-x-2"
+                      >
+                        <Search className="w-4 h-4" />
+                        <span>Selecionar</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setManualPatient(true); setFormData(prev => ({ ...prev, patientId: '' })) }}
+                        className="px-3 py-2 rounded-lg font-medium"
+                        style={{ backgroundColor: 'var(--color-secondary)', color: 'var(--color-text)' }}
+                      >
+                        Digitar manualmente
+                      </button>
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -970,6 +1006,17 @@ export default function CreatePrescription() {
                  className="px-6 py-2 border border-white/20 text-white rounded-lg hover:bg-white/10 transition-colors"
                >
                  Cancel
+               </button>
+               <button
+                 onClick={() => {
+                   setManualPatient(true)
+                   setFormData(prev => ({ ...prev, patientId: '', patientName: patientSearchTerm || prev.patientName }))
+                   setShowPatientModal(false)
+                 }}
+                 className="ml-3 px-6 py-2 rounded-lg transition-colors"
+                 style={{ backgroundColor: 'var(--color-secondary)', color: 'var(--color-text)' }}
+               >
+                 Digitar manualmente
                </button>
              </div>
            </div>

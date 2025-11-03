@@ -17,7 +17,7 @@ import {
   Play,
   Check
 } from 'lucide-react'
-import { collection, onSnapshot, query, where, updateDoc, doc, getDoc } from 'firebase/firestore'
+import { collection, onSnapshot, query, where, orderBy, updateDoc, doc, getDoc } from 'firebase/firestore'
 import { db } from '../../../firebase/config'
 
 export default function TokenQueue() {
@@ -68,43 +68,47 @@ export default function TokenQueue() {
 
     setLoading(true)
     setError('')
-    
+
     try {
       const appointmentsRef = collection(db, 'appointments')
-      const q = query(
-        appointmentsRef, 
-        where('appointmentDate', '==', selectedDate),
-        where('doctorName', '==', doctorName)
-      )
-      
+      // Escopo por data e ordena por createdAt para manter custo baixo; filtramos por doutor no cliente (aceita compatibilidade com registros antigos sem doctorId)
+      const q = query(appointmentsRef, where('appointmentDate', '==', selectedDate), orderBy('createdAt', 'asc'))
+
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        const appointmentsData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }))
-        
-        // Sort by token number if available, otherwise by creation time
-        const sortedAppointments = appointmentsData.sort((a, b) => {
-          if (a.tokenNumber && b.tokenNumber) {
-            return a.tokenNumber - b.tokenNumber
-          }
+        const all = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+
+        const cleanName = (name = '') => name.replace(/^Dr\.?\s*/i, '').trim()
+        const myId = currentUser?.uid
+        const myName = doctorName
+        const myNameClean = cleanName(myName)
+
+        // Mantém itens do médico logado por id OU por variações do nome
+        const myAppointments = all.filter(apt => {
+          if (apt.doctorId && myId && apt.doctorId === myId) return true
+          const aptName = apt.doctorName || ''
+          if (!aptName && !myName) return false
+          if (aptName === myName) return true
+          if (aptName.toLowerCase() === myName.toLowerCase()) return true
+          if (cleanName(aptName) === myNameClean) return true
+          if ((aptName.startsWith('Dr.') ? aptName : `Dr. ${aptName}`) === (myName.startsWith('Dr.') ? myName : `Dr. ${myName}`)) return true
+          return false
+        })
+
+        // Ordena priorizando tokenNumber, depois createdAt
+        const sorted = myAppointments.sort((a, b) => {
+          if (a.tokenNumber && b.tokenNumber) return a.tokenNumber - b.tokenNumber
           if (a.tokenNumber) return -1
           if (b.tokenNumber) return 1
-          // Parse dates for comparison
           const dateA = new Date(a.createdAt || 0)
           const dateB = new Date(b.createdAt || 0)
           return dateA - dateB
         })
-        
-        setAppointments(sortedAppointments)
-        setFilteredAppointments(sortedAppointments)
-        
-        // Set current token (first token_generated or in_progress)
-        const current = sortedAppointments.find(apt => 
-          apt.status === 'token_generated' || apt.status === 'in_progress'
-        )
-        setCurrentToken(current)
-        
+
+        setAppointments(sorted)
+        setFilteredAppointments(sorted)
+
+        const current = sorted.find(apt => apt.status === 'token_generated' || apt.status === 'in_progress')
+        setCurrentToken(current || null)
         setLoading(false)
       }, (error) => {
         console.error('Error fetching appointments:', error)
@@ -318,7 +322,7 @@ export default function TokenQueue() {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-blue-400 focus:outline-none"
+                className="px-4 py-2 border border-white/10 rounded-lg focus:border-blue-400 focus:outline-none"
               />
               
               <div className="text-center">
@@ -355,7 +359,7 @@ export default function TokenQueue() {
                   placeholder="Search by patient name, phone, or token number..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:border-blue-400 focus:outline-none"
+                  className="w-full pl-10 pr-4 py-2 border border-white/10 rounded-lg placeholder-slate-400 focus:border-blue-400 focus:outline-none"
                 />
               </div>
             </div>
@@ -363,7 +367,7 @@ export default function TokenQueue() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-blue-400 focus:outline-none"
+              className="px-4 py-2 border border-white/10 rounded-lg focus:border-blue-400 focus:outline-none"
             >
               <option value="all">All Status</option>
               <option value="token_generated">Waiting</option>

@@ -3,7 +3,7 @@ import { useAuth } from '../../../hooks/useAuth'
 import { Link, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import LogoutButton from '../../../components/LogoutButton'
-import { downloadPrescriptionPDF, openPrescriptionPDF, printPrescriptionPDF } from '../../receptionist/prescriptions/PrescriptionPdfGenerator'
+import { downloadPrescriptionPDF, openPrescriptionPDF, printPrescriptionPDF } from './PrescriptionPdfGenerator'
 import { 
   User, 
   Calendar, 
@@ -225,7 +225,7 @@ export default function ViewPrescription() {
                 <span className="ml-2 text-white">{prescription.prescriptionDate}</span>
               </div>
               <div>
-                <span className="text-slate-400">Doctor:</span>
+                <span className="text-slate-400">Dentista:</span>
                 <span className="ml-2 text-white">{prescription.doctorName}</span>
               </div>
             </div>
@@ -370,7 +370,7 @@ export default function ViewPrescription() {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm text-slate-400">Prescribed on: {prescription.prescriptionDate}</p>
-                <p className="text-sm text-slate-400">Doctor: {prescription.doctorName}</p>
+                <p className="text-sm text-slate-400">Dentista: {prescription.doctorName}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-slate-400">Prescription ID</p>

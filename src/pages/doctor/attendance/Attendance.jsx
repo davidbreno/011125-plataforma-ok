@@ -16,12 +16,11 @@ import {
   FaHourglassHalf,
   FaTimesCircle
 } from 'react-icons/fa'
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore'
-import { db } from '../../../firebase/config'
+import { supabase } from '../../../supabase/config'
 
 export default function Attendance() {
   const { currentUser } = useAuth()
-  const isUserReady = !!(currentUser && currentUser.uid)
+  const userId = currentUser?.uid || currentUser?.id || null
   const [attendances, setAttendances] = useState([])
   const [filteredAttendances, setFilteredAttendances] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -40,19 +39,44 @@ export default function Attendance() {
     notes: ''
   })
 
-  // Fetch attendances
+  // Fetch attendances (Supabase) + realtime
   useEffect(() => {
-    const attendancesRef = collection(db, 'attendances')
-    const q = query(attendancesRef, orderBy('createdAt', 'desc'))
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const attendancesData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
+    let mounted = true
+    const fetchAtt = async () => {
+      const { data, error } = await supabase
+        .from('attendances')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (!mounted) return
+      if (error) {
+        console.error('Erro ao carregar atendimentos:', error)
+        toast.error('Erro ao carregar atendimentos')
+        return
+      }
+      const mapped = (data || []).map(row => ({
+        id: row.id,
+        patientName: row.patient_name,
+        date: row.date,
+        time: row.time,
+        type: row.type,
+        status: row.status,
+        symptoms: row.symptoms,
+        diagnosis: row.diagnosis,
+        treatment: row.treatment,
+        notes: row.notes,
       }))
-      setAttendances(attendancesData)
-      setFilteredAttendances(attendancesData)
-    })
-    return () => unsubscribe()
+      setAttendances(mapped)
+      setFilteredAttendances(mapped)
+    }
+    fetchAtt()
+    const channel = supabase
+      .channel('attendances_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendances' }, fetchAtt)
+      .subscribe()
+    return () => {
+      mounted = false
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   // Filter by search and status
@@ -79,26 +103,39 @@ export default function Attendance() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      if (!currentUser || !currentUser.uid) {
-        toast.error('Sessão do usuário ainda não carregou. Tente novamente em alguns segundos.')
-        return
-      }
       if (editingAttendance) {
         const updatePayload = {
-          ...formData,
-          updatedAt: serverTimestamp(),
+          patient_name: formData.patientName,
+          date: formData.date,
+          time: formData.time,
+          type: formData.type,
+          status: formData.status,
+          symptoms: formData.symptoms,
+          diagnosis: formData.diagnosis,
+          treatment: formData.treatment,
+          notes: formData.notes,
+          updated_at: new Date().toISOString(),
+          updated_by: userId || null,
         }
-        if (currentUser?.uid) updatePayload.updatedBy = currentUser.uid
-        await updateDoc(doc(db, 'attendances', editingAttendance.id), updatePayload)
+        const { error } = await supabase.from('attendances').update(updatePayload).eq('id', editingAttendance.id)
+        if (error) throw error
         toast.success('Atendimento atualizado com sucesso!')
       } else {
         const createPayload = {
-          ...formData,
-          doctorName: currentUser?.displayName || currentUser?.email || 'Desconhecido',
-          createdAt: serverTimestamp(),
+          patient_name: formData.patientName,
+          date: formData.date,
+          time: formData.time,
+          type: formData.type,
+          status: formData.status,
+          symptoms: formData.symptoms,
+          diagnosis: formData.diagnosis,
+          treatment: formData.treatment,
+          notes: formData.notes,
+          doctor_name: currentUser?.displayName || currentUser?.email || 'Desconhecido',
+          created_by: userId || null,
         }
-        if (currentUser?.uid) createPayload.createdBy = currentUser.uid
-        await addDoc(collection(db, 'attendances'), createPayload)
+        const { error } = await supabase.from('attendances').insert([createPayload])
+        if (error) throw error
         toast.success('Atendimento registrado com sucesso!')
       }
       setShowModal(false)
@@ -139,7 +176,8 @@ export default function Attendance() {
   const handleDelete = async (attendanceId) => {
     if (window.confirm('Tem certeza que deseja excluir este atendimento?')) {
       try {
-        await deleteDoc(doc(db, 'attendances', attendanceId))
+        const { error } = await supabase.from('attendances').delete().eq('id', attendanceId)
+        if (error) throw error
         toast.success('Atendimento excluído com sucesso!')
       } catch (error) {
         console.error('Error:', error)
@@ -502,12 +540,10 @@ export default function Attendance() {
                 <button
                   type="submit"
                   className="flex-1 btn-primary"
-                  disabled={!isUserReady}
-                  style={!isUserReady ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 >
                   {editingAttendance ? 'Atualizar' : 'Registrar'}
                 </button>
-                {!isUserReady && (
+                {!userId && (
                   <span className="text-sm" style={{ color: 'var(--color-text-light)' }}>
                     Carregando sessão...
                   </span>

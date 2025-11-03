@@ -16,11 +16,13 @@ import {
   FaFolder
 } from 'react-icons/fa'
 import { collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore'
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db } from '../../../firebase/config'
 
 export default function Documents() {
   const { currentUser } = useAuth()
-  const isUserReady = !!(currentUser && currentUser.uid)
+  const userId = currentUser?.uid || currentUser?.id || null
+  const isUserReady = !!userId
   const [documents, setDocuments] = useState([])
   const [filteredDocuments, setFilteredDocuments] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -30,9 +32,10 @@ export default function Documents() {
     title: '',
     description: '',
     category: 'anamnese',
-    fileUrl: '',
     fileName: ''
   })
+  const [file, setFile] = useState(null)
+  const storage = getStorage()
 
   const categories = [
     { value: 'all', label: 'Todos' },
@@ -79,16 +82,29 @@ export default function Documents() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      if (!currentUser || !currentUser.uid) {
-        toast.error('Sessão do usuário ainda não carregou. Tente novamente em alguns segundos.')
-        return
+      // Faz upload do PDF se presente e não bloqueia caso a sessão ainda não esteja pronta
+      let uploadedUrl = ''
+      let uploadedName = formData.fileName
+      if (file) {
+        if (file.type !== 'application/pdf') {
+          toast.error('Apenas PDFs são permitidos')
+          return
+        }
+        const path = `documents/${userId || 'anon'}/${Date.now()}_${file.name}`
+        const storageRef = ref(storage, path)
+        await uploadBytes(storageRef, file)
+        uploadedUrl = await getDownloadURL(storageRef)
+        uploadedName = file.name
       }
+
       const payload = {
         ...formData,
+        fileUrl: uploadedUrl,
+        fileName: uploadedName,
         createdAt: serverTimestamp(),
         doctorName: currentUser?.displayName || currentUser?.email || 'Desconhecido'
       }
-      if (currentUser?.uid) payload.createdBy = currentUser.uid
+  if (userId) payload.createdBy = userId
       await addDoc(collection(db, 'documents'), payload)
       toast.success('Documento cadastrado com sucesso!')
       setShowModal(false)
@@ -96,9 +112,9 @@ export default function Documents() {
         title: '',
         description: '',
         category: 'anamnese',
-        fileUrl: '',
         fileName: ''
       })
+      setFile(null)
     } catch (error) {
       console.error('Error:', error)
       toast.error('Erro ao cadastrar documento')
@@ -346,13 +362,12 @@ export default function Documents() {
 
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text)' }}>
-                  URL do Arquivo
+                  Importar PDF
                 </label>
                 <input
-                  type="url"
-                  value={formData.fileUrl}
-                  onChange={(e) => setFormData({...formData, fileUrl: e.target.value})}
-                  placeholder="https://..."
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(e) => setFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
                   className="w-full px-4 py-2 rounded-lg outline-none"
                   style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
                 />
@@ -376,8 +391,7 @@ export default function Documents() {
                 <button
                   type="submit"
                   className="flex-1 btn-primary"
-                  disabled={!isUserReady}
-                  style={!isUserReady ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                  
                 >
                   Cadastrar
                 </button>
@@ -394,7 +408,6 @@ export default function Documents() {
                       title: '',
                       description: '',
                       category: 'anamnese',
-                      fileUrl: '',
                       fileName: ''
                     })
                   }}

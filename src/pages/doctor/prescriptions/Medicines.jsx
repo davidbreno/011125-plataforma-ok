@@ -201,9 +201,9 @@ export default function Medicines() {
         stockQuantity: parseInt(formData.stockQuantity) || 0,
         reorderLevel: parseInt(formData.reorderLevel) || 0,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        createdBy: currentUser.uid
+        updatedAt: new Date().toISOString()
       }
+      if (currentUser?.uid) medicineData.createdBy = currentUser.uid
       
       if (showEditModal) {
         // Update existing medicine

@@ -11,41 +11,44 @@ import {
   FaPrescription,
   FaSignOutAlt
 } from 'react-icons/fa';
-import { signOut } from 'firebase/auth';
-import { auth } from '../firebase/config';
+import { useAuth } from '../hooks/useAuth';
 
-const Sidebar = ({ userRole }) => {
+const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await logout();
       navigate('/login');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }
   };
 
+  // Forçar a navegação para o contexto de dentista (sem recepção)
+  const baseRole = 'doctor';
+
   const menuItems = {
     dashboard: { 
-      path: `/${userRole}`, 
+      path: `/${baseRole}`, 
       label: 'Dashboard', 
       icon: FaHome 
     },
     
     clinicManagement: [
-      { path: `/${userRole}/patients`, label: 'Pacientes', icon: FaUsers },
-      { path: `/${userRole}/appointments`, label: 'Agenda', icon: FaCalendar },
-      { path: `/${userRole}/documents`, label: 'Documentos', icon: FaFile },
+      { path: `/${baseRole}/patients`, label: 'Pacientes', icon: FaUsers },
+      { path: `/${baseRole}/appointments`, label: 'Agenda', icon: FaCalendar },
+      { path: `/${baseRole}/documents`, label: 'Documentos', icon: FaFile },
     ],
     
     operations: [
-      { path: `/${userRole}/reports`, label: 'Relatórios', icon: FaChartBar },
-      { path: `/${userRole}/stock`, label: 'Estoque', icon: FaBoxes },
-      { path: `/${userRole}/attendance`, label: 'Atendimentos', icon: FaStethoscope },
-      { path: `/${userRole}/token`, label: 'Fila de Pacientes', icon: FaClipboardList },
-      { path: `/${userRole}/prescriptions`, label: 'Prescrições', icon: FaPrescription },
+      { path: `/${baseRole}/reports`, label: 'Relatórios', icon: FaChartBar },
+      { path: `/${baseRole}/stock`, label: 'Estoque', icon: FaBoxes },
+      { path: `/${baseRole}/attendance`, label: 'Atendimentos', icon: FaStethoscope },
+      { path: `/${baseRole}/token`, label: 'Fila de Pacientes', icon: FaClipboardList },
+      { path: `/${baseRole}/prescriptions`, label: 'Prescrições', icon: FaPrescription },
     ]
   };
 

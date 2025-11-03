@@ -53,6 +53,12 @@
   --toast-bg: #d86161ff;
   --toast-success: #10b981;
   --toast-error: #ef4444;
+
+  /* Inputs: azul acinzentado bem claro */
+  --input-bg: #e9eff6;         /* fundo das caixas (azul puxado pro cinza bem claro) */
+  --input-text: #0b111b;       /* texto escuro para contraste */
+  --input-placeholder: #5b6673;/* placeholder cinza-azulado */
+  --input-border: #c9d6e3;     /* borda suave */
 }
 
 /* Helper classes using theme variables */
@@ -62,7 +68,7 @@
 .bg-secondary { background-color: var(--color-secondary) !important; }
 .border-default { border-color: var(--color-border) !important; }
 
-/* Force all inputs, textareas, and selects to have white background and black text */
+/* Aparência padrão dos campos de entrada em todo o site */
 input[type="text"],
 input[type="email"],
 input[type="tel"],
@@ -73,8 +79,9 @@ input[type="password"],
 input[type="search"],
 textarea,
 select {
-  background-color: #ffffff !important;
-  color: #000000 !important;
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  border: 1px solid var(--input-border);
 }
 
 input[type="text"]::placeholder,
@@ -82,7 +89,7 @@ input[type="email"]::placeholder,
 input[type="tel"]::placeholder,
 input[type="search"]::placeholder,
 textarea::placeholder {
-  color: #666666 !important;
+  color: var(--input-placeholder) !important;
 }
 
 /* Button utilities */

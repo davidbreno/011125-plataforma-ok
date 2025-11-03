@@ -1,10 +1,8 @@
 import { Link } from 'react-router-dom'
-import { useAuth } from '../../hooks/useAuth'
 import { FaSearch, FaPlus, FaCalendar, FaClock, FaUserPlus, FaMoneyBillWave, FaFileAlt } from 'react-icons/fa'
 import { useState, useEffect } from 'react'
 
 export default function DoctorHome() {
-  const { currentUser } = useAuth()
   const [currentTime, setCurrentTime] = useState(new Date())
 
   useEffect(() => {
@@ -270,21 +268,39 @@ export default function DoctorHome() {
               <h3 className="text-base font-semibold" style={{ color: 'var(--color-text)' }}>Atalhos rápidos</h3>
             </div>
             <p className="text-sm mb-4" style={{ color: 'var(--color-text-light)' }}>Acelere suas rotinas diárias</p>
-            <div className="space-y-2">
-              <Link to="/doctor/patients">
-                <button className="btn-primary w-full flex items-center gap-2 justify-start">
+            <div className="space-y-3">
+              <Link to="/doctor/patients" className="block">
+                <button
+                  className="w-full flex items-center gap-3 justify-start rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-shadow hover:opacity-95"
+                  style={{
+                    backgroundImage: 'linear-gradient(90deg, #06b6d4 0%, #3b82f6 100%)',
+                    color: '#ffffff'
+                  }}
+                >
                   <FaUserPlus />
                   Cadastrar novo paciente
                 </button>
               </Link>
-              <Link to="/doctor/billing">
-                <button className="btn-primary w-full flex items-center gap-2 justify-start">
+              <Link to="/doctor/billing" className="block">
+                <button
+                  className="w-full flex items-center gap-3 justify-start rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-shadow hover:opacity-95"
+                  style={{
+                    backgroundImage: 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)',
+                    color: '#ffffff'
+                  }}
+                >
                   <FaMoneyBillWave />
                   Registrar pagamento
                 </button>
               </Link>
-              <Link to="/doctor/documents">
-                <button className="btn-primary w-full flex items-center gap-2 justify-start">
+              <Link to="/doctor/documents" className="block">
+                <button
+                  className="w-full flex items-center gap-3 justify-start rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-shadow hover:opacity-95"
+                  style={{
+                    backgroundImage: 'linear-gradient(90deg, #a855f7 0%, #ec4899 100%)',
+                    color: '#ffffff'
+                  }}
+                >
                   <FaFileAlt />
                   Criar modelo de anamnese
                 </button>

@@ -1,25 +1,18 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { FaChevronLeft, FaChevronRight, FaPlus, FaClock, FaUser, FaPhone } from 'react-icons/fa'
+import { useAuth } from '../hooks/useAuth'
+import { supabase } from '../supabase/config'
+import { useNavigate } from 'react-router-dom'
 
 export default function Agenda() {
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 10, 1)) // November 2025
-  const [selectedDate, setSelectedDate] = useState(null)
-
-  // Mock appointments
-  const appointments = {
-    '2025-11-05': [
-      { id: 1, time: '09:00', patient: 'João Silva', phone: '(11) 98765-4321', type: 'Consulta' },
-      { id: 2, time: '10:30', patient: 'Maria Santos', phone: '(11) 97654-3210', type: 'Retorno' }
-    ],
-    '2025-11-06': [
-      { id: 3, time: '14:00', patient: 'Pedro Costa', phone: '(11) 96543-2109', type: 'Implante' }
-    ],
-    '2025-11-07': [
-      { id: 4, time: '09:30', patient: 'Ana Oliveira', phone: '(11) 95432-1098', type: 'Limpeza' },
-      { id: 5, time: '11:00', patient: 'Carlos Souza', phone: '(11) 94321-0987', type: 'Canal' },
-      { id: 6, time: '15:00', patient: 'Julia Lima', phone: '(11) 93210-9876', type: 'Consulta' }
-    ]
-  }
+  const navigate = useNavigate()
+  const { currentUser, userRole } = useAuth()
+  const [currentDate, setCurrentDate] = useState(() => new Date())
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0,10))
+  const [viewMode, setViewMode] = useState('month') // 'month' | 'week'
+  const [doctorName, setDoctorName] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [appointmentsByDate, setAppointmentsByDate] = useState({})
 
   const monthNames = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -68,7 +61,8 @@ export default function Agenda() {
 
   const hasAppointments = (day) => {
     const dateKey = getDateKey(day)
-    return dateKey && appointments[dateKey] && appointments[dateKey].length > 0
+    const list = dateKey && appointmentsByDate[dateKey]
+    return list && list.length > 0
   }
 
   const isToday = (day) => {
@@ -80,6 +74,147 @@ export default function Agenda() {
 
   const days = getDaysInMonth(currentDate)
 
+  // Helpers para intervalo do mês atual
+  const monthRange = useMemo(() => {
+    const y = currentDate.getFullYear()
+    const m = currentDate.getMonth()
+    const start = new Date(y, m, 1)
+    const end = new Date(y, m + 1, 1)
+    const startStr = start.toISOString().slice(0,10)
+    const endStr = end.toISOString().slice(0,10)
+    return { startStr, endStr }
+  }, [currentDate])
+
+  // Helpers para intervalo da semana selecionada (domingo a domingo)
+  const weekRange = useMemo(() => {
+    const base = selectedDate ? new Date(selectedDate) : new Date()
+    const start = new Date(base)
+    start.setDate(base.getDate() - base.getDay())
+    start.setHours(0,0,0,0)
+    const end = new Date(start)
+    end.setDate(start.getDate() + 7)
+    const startStr = start.toISOString().slice(0,10)
+    const endStr = end.toISOString().slice(0,10)
+    return { startStr, endStr }
+  }, [selectedDate])
+
+  // Buscar nome do médico (quando role = doctor)
+  useEffect(() => {
+    if (!currentUser || userRole !== 'doctor') return
+    let isMounted = true
+    ;(async () => {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('full_name')
+          .eq('id', currentUser.id)
+          .maybeSingle()
+        if (error) throw error
+        const name = data?.full_name || currentUser.user_metadata?.full_name || 'Dr. David'
+        if (isMounted) setDoctorName(name || 'Dr. David')
+      } catch {
+        if (isMounted) setDoctorName(currentUser.user_metadata?.full_name || 'Dr. David')
+      }
+    })()
+    return () => { isMounted = false }
+  }, [currentUser, userRole])
+
+  // Carregar compromissos (mês ou semana), filtrando por role
+  useEffect(() => {
+    if (!currentUser) return
+    let channel
+    let cancelled = false
+    const load = async () => {
+      setLoading(true)
+      try {
+        const range = viewMode === 'week' ? weekRange : monthRange
+        let query = supabase
+          .from('appointments')
+          .select('*')
+          .gte('appointment_date', range.startStr)
+          .lt('appointment_date', range.endStr)
+
+        if (userRole === 'doctor') {
+          query = query.eq('doctor_id', currentUser.id)
+        }
+
+        let { data, error } = await query.order('appointment_date', { ascending: true })
+        if (error) throw error
+
+        // Caso seja médico e não encontre por id (dados antigos), tenta por nome
+        if ((userRole === 'doctor') && (!data || data.length === 0) && doctorName) {
+          const byName = await supabase
+            .from('appointments')
+            .select('*')
+            .gte('appointment_date', range.startStr)
+            .lt('appointment_date', range.endStr)
+            .eq('doctor_name', doctorName)
+            .order('appointment_date', { ascending: true })
+          if (!byName.error) data = byName.data
+        }
+
+        if (cancelled) return
+        const grouped = {}
+        for (const row of (data || [])) {
+          const key = row.appointment_date
+          const item = {
+            id: row.id,
+            time: row.appointment_time,
+            patient: row.patient_name,
+            phone: row.patient_phone,
+            type: row.appointment_type || 'Consulta',
+            status: row.status || 'scheduled',
+            doctorName: row.doctor_name || ''
+          }
+          if (!grouped[key]) grouped[key] = []
+          grouped[key].push(item)
+        }
+        setAppointmentsByDate(grouped)
+      } catch (e) {
+        console.error('Erro ao carregar agenda:', e)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+
+    channel = supabase
+      .channel('agenda-appointments')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, load)
+      .subscribe()
+
+    return () => {
+      cancelled = true
+      if (channel) supabase.removeChannel(channel)
+    }
+  }, [currentUser, userRole, monthRange, weekRange, viewMode, doctorName])
+
+  const selectedList = selectedDate ? (appointmentsByDate[selectedDate] || []) : []
+
+  const counts = useMemo(() => {
+    const todayStr = new Date().toISOString().slice(0,10)
+    const startOfWeek = new Date()
+    startOfWeek.setHours(0,0,0,0)
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
+    const endOfWeek = new Date(startOfWeek)
+    endOfWeek.setDate(endOfWeek.getDate() + 7)
+    const startWeekStr = startOfWeek.toISOString().slice(0,10)
+    const endWeekStr = endOfWeek.toISOString().slice(0,10)
+
+    let today = 0, week = 0, month = 0
+    for (const [date, list] of Object.entries(appointmentsByDate)) {
+      const len = list.length
+      if (date === todayStr) today += len
+      if (date >= startWeekStr && date < endWeekStr) week += len
+      // mês atual já está filtrado pela query, então basta somar tudo
+      month += len
+    }
+    return { today, week, month }
+  }, [appointmentsByDate])
+
+  // Agrupamento por dentista na visão semanal (apenas recepção)
+  // Visão semanal por dentista removida (sem recepção)
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -90,9 +225,30 @@ export default function Agenda() {
             Gerencie seus agendamentos e compromissos
           </p>
         </div>
-        <button className="btn-primary flex items-center gap-2">
+        <button
+          onClick={() => navigate('/doctor/appointments')}
+          className="btn-primary flex items-center gap-2"
+        >
           <FaPlus />
           Novo Agendamento
+        </button>
+      </div>
+
+      {/* Controles de visualização */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setViewMode('month')}
+          className="px-3 py-2 rounded-lg font-medium"
+          style={{ backgroundColor: viewMode === 'month' ? 'var(--color-primary)' : 'var(--color-bg)', color: viewMode === 'month' ? 'white' : 'var(--color-text)' }}
+        >
+          Mês
+        </button>
+        <button
+          onClick={() => setViewMode('week')}
+          className="px-3 py-2 rounded-lg font-medium"
+          style={{ backgroundColor: viewMode === 'week' ? 'var(--color-primary)' : 'var(--color-bg)', color: viewMode === 'week' ? 'white' : 'var(--color-text)' }}
+        >
+          Semana
         </button>
       </div>
 
@@ -192,15 +348,15 @@ export default function Agenda() {
           </div>
         </div>
 
-        {/* Appointments List */}
+        {/* Appointments List (ou visão semanal por dentista) */}
         <div className="card-surface">
           <h3 className="text-lg font-bold mb-4" style={{ color: 'var(--color-text)' }}>
-            {selectedDate ? `Agendamentos - ${selectedDate}` : 'Selecione uma data'}
+            {viewMode === 'week' ? 'Semana - por dentista' : (selectedDate ? `Agendamentos - ${selectedDate}` : 'Selecione uma data')}
           </h3>
 
-          {selectedDate && appointments[selectedDate] ? (
+          {selectedDate && selectedList.length > 0 ? (
             <div className="space-y-3">
-              {appointments[selectedDate].map(appt => (
+              {selectedList.map(appt => (
                 <div
                   key={appt.id}
                   className="p-4 rounded-lg"
@@ -251,7 +407,10 @@ export default function Agenda() {
               <p className="text-sm" style={{ color: 'var(--color-text-light)' }}>
                 Nenhum agendamento para esta data
               </p>
-              <button className="mt-4 btn-primary">
+              <button
+                onClick={() => navigate('/doctor/appointments')}
+                className="mt-4 btn-primary"
+              >
                 <FaPlus className="inline mr-2" />
                 Agendar
               </button>
@@ -272,25 +431,27 @@ export default function Agenda() {
           <div className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-light)' }}>
             Agendamentos Hoje
           </div>
-          <div className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>0</div>
+          <div className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>{loading ? '…' : counts.today}</div>
         </div>
         <div className="card-surface">
           <div className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-light)' }}>
             Esta Semana
           </div>
-          <div className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>8</div>
+          <div className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>{loading ? '…' : counts.week}</div>
         </div>
         <div className="card-surface">
           <div className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-light)' }}>
             Este Mês
           </div>
-          <div className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>32</div>
+          <div className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>{loading ? '…' : counts.month}</div>
         </div>
         <div className="card-surface">
           <div className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-light)' }}>
             Taxa de Ocupação
           </div>
-          <div className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>78%</div>
+          <div className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>
+            {loading ? '…' : `${Math.min(100, Math.round((counts.month / 120) * 100))}%`}
+          </div>
         </div>
       </div>
     </div>

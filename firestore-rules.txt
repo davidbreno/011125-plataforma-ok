@@ -41,6 +41,26 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
     
+    // Allow authenticated users to read and write to anamneses collection
+    match /anamneses/{document} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Allow authenticated users to read and write to budgets collection
+    match /budgets/{document} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Allow authenticated users to read and write to attendances collection
+    match /attendances/{document} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Allow authenticated users to read and write to documents collection
+    match /documents/{document} {
+      allow read, write: if request.auth != null;
+    }
+
     // Allow authenticated users to read and write to services collection
     match /services/{document} {
       allow read, write: if request.auth != null;

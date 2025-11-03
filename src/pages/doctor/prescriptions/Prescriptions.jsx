@@ -20,10 +20,12 @@ import {
   ArrowLeft,
   CalendarDays,
   CalendarRange,
-  CalendarCheck
+  CalendarCheck,
+  Download
 } from 'lucide-react'
 import { collection, onSnapshot, query, orderBy, doc, deleteDoc } from 'firebase/firestore'
 import { db } from '../../../firebase/config'
+import { downloadPrescriptionPDF } from './PrescriptionPdfGenerator'
 
 export default function Prescriptions() {
   const { currentUser } = useAuth()
@@ -40,6 +42,8 @@ export default function Prescriptions() {
     if (!currentUser) return
 
     setLoading(true)
+    // Safety fallback in case snapshot doesn't resolve (network/offline)
+    const safety = setTimeout(() => setLoading(false), 7000)
     
     // Fetch all prescriptions and filter by doctor
     const prescriptionsRef = collection(db, 'prescriptions')
@@ -84,7 +88,8 @@ export default function Prescriptions() {
       })
       
       setPrescriptions(doctorPrescriptions)
-      setLoading(false)
+  setLoading(false)
+  clearTimeout(safety)
       
       if (doctorPrescriptions.length > 0) {
         toast.success(`Loaded ${doctorPrescriptions.length} prescriptions`)
@@ -95,9 +100,10 @@ export default function Prescriptions() {
       console.error('Error fetching prescriptions:', error)
       toast.error('Error loading prescriptions')
       setLoading(false)
+      clearTimeout(safety)
     })
 
-    return () => unsubscribe()
+    return () => { clearTimeout(safety); unsubscribe() }
   }, [currentUser])
 
   useEffect(() => {
@@ -149,6 +155,20 @@ export default function Prescriptions() {
         console.error('Error deleting prescription:', error)
         toast.error(`Error deleting prescription: ${error.message}`)
       }
+    }
+  }
+
+  const handleExportPdf = (prescription) => {
+    try {
+      const ok = downloadPrescriptionPDF(prescription)
+      if (ok) {
+        toast.success('Exportando PDF...')
+      } else {
+        toast.error('Falha ao gerar PDF')
+      }
+    } catch (err) {
+      console.error('PDF export error:', err)
+      toast.error('Erro ao gerar PDF')
     }
   }
 
@@ -314,7 +334,7 @@ export default function Prescriptions() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-blue-400 focus:outline-none"
+            className="px-4 py-2 border border-white/10 rounded-lg focus:border-blue-400 focus:outline-none"
           />
         </div>
 
@@ -396,6 +416,13 @@ export default function Prescriptions() {
                       <Eye className="w-4 h-4" />
                       <span>View</span>
                     </Link>
+                    <button
+                      onClick={() => handleExportPdf(prescription)}
+                      className="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>PDF</span>
+                    </button>
                     <Link
                       to={`/doctor/prescriptions/edit/${prescription.id}`}
                       className="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm transition-colors"
@@ -462,6 +489,13 @@ export default function Prescriptions() {
                             >
                               View
                             </Link>
+                            <button
+                              onClick={() => handleExportPdf(prescription)}
+                              className="px-2 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-xs transition-colors flex items-center gap-1"
+                            >
+                              <Download className="w-3 h-3" />
+                              <span>PDF</span>
+                            </button>
                             <Link
                               to={`/doctor/prescriptions/edit/${prescription.id}`}
                               className="px-2 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-xs transition-colors"

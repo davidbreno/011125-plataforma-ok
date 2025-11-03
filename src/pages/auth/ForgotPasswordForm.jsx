@@ -157,7 +157,7 @@ export default function ForgotPasswordForm() {
                     placeholder="Digite seu e‑mail"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 h-12 border-2 transition-all duration-300 border-gray-200 focus:border-blue-500 dark:border-gray-600 dark:focus:border-blue-400 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="w-full pl-10 h-12 border-2 transition-all duration-300 border-gray-200 focus:border-blue-500 dark:border-gray-600 dark:focus:border-blue-400 rounded-lg"
                     disabled={isLoading}
                     required
                   />
